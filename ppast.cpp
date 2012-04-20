@@ -40,103 +40,99 @@ QString ASTNode::spellName() const
     return d->name;
 }
 
-ASTNode *AST::CreatePunct(const QString &str)
+ASTNode *AST::CreateOp(const QString &str)
 {
     static bool mapInit = false;
-    static QMap<QString, int> punctMap;
+    static QMap<QString, int> opMap;
     if (!mapInit) {
         mapInit = true;
-        punctMap.insert("[", '[');
-        punctMap.insert("]", ']');
-        punctMap.insert("(", '(');
-        punctMap.insert(")", ')');
-        punctMap.insert("{", '{');
-        punctMap.insert("}", '}');
-        punctMap.insert(".", '.');
-        punctMap.insert("&", '&');
-        punctMap.insert("*", '*');
-        punctMap.insert("+", '+');
-        punctMap.insert("-", '-');
-        punctMap.insert("~", '~');
-        punctMap.insert("/", '/');
-        punctMap.insert("%", '%');
-        punctMap.insert("^", '^');
-        punctMap.insert("(", ')');
-        punctMap.insert("|", '|');
-        punctMap.insert("<", '<');
-        punctMap.insert(">", '>');
-        punctMap.insert("?", '?');
-        punctMap.insert(":", ':');
-        punctMap.insert(";", ';');
-        punctMap.insert("=", '=');
-        punctMap.insert(",", ',');
-        punctMap.insert("#", '|');
-        punctMap.insert("->", MEMBER_REF);
-        punctMap.insert("++", PLUS_PLUS);
-        punctMap.insert("--", MINUS_MINUS);
-        punctMap.insert("<<", LSHIFT);
-        punctMap.insert(">>", RSHIFT);
-        punctMap.insert("<=", LE);
-        punctMap.insert(">=", GE);
-        punctMap.insert("==", EQ);
-        punctMap.insert("!=", NE);
-        punctMap.insert("&&", AND_AND);
-        punctMap.insert("*=", MULT_ASSIGN);
-        punctMap.insert("/=", DIV_ASSIGN);
-        punctMap.insert("%=", MOD_ASSIGN);
-        punctMap.insert("+=", PLUS_ASSIGN);
-        punctMap.insert("-=", MINUS_ASSIGN);
-        punctMap.insert("<<=", LSHIFT_ASSIGN);
-        punctMap.insert(">>=", RSHIFT_ASSIGN);
-        punctMap.insert("&=", AND_ASSIGN);
-        punctMap.insert("^=", XOR_ASSIGN);
-        punctMap.insert("|=", OR_ASSIGN);
-        punctMap.insert("##", HASH_HASH);
-        punctMap.insert("<:", '[');
-        punctMap.insert(":>", ']');
-        punctMap.insert("<%", '{');
-        punctMap.insert("%>", '}');
-        punctMap.insert("%:", '#');
-        punctMap.insert("%:%:", HASH_HASH);
-        punctMap.insert("...", DOT_DOT_DOT);
+        opMap.insert("defined", DEFINED);
+        opMap.insert("[", '[');
+        opMap.insert("]", ']');
+        opMap.insert("(", '(');
+        opMap.insert(")", ')');
+        opMap.insert("{", '{');
+        opMap.insert("}", '}');
+        opMap.insert(".", '.');
+        opMap.insert("&", '&');
+        opMap.insert("*", '*');
+        opMap.insert("+", '+');
+        opMap.insert("-", '-');
+        opMap.insert("~", '~');
+        opMap.insert("/", '/');
+        opMap.insert("%", '%');
+        opMap.insert("^", '^');
+        opMap.insert("(", ')');
+        opMap.insert("|", '|');
+        opMap.insert("<", '<');
+        opMap.insert(">", '>');
+        opMap.insert("?", '?');
+        opMap.insert(":", ':');
+        opMap.insert(";", ';');
+        opMap.insert("=", '=');
+        opMap.insert(",", ',');
+        opMap.insert("#", '#');
+        opMap.insert("->", MEMBER_REF);
+        opMap.insert("++", PLUS_PLUS);
+        opMap.insert("--", MINUS_MINUS);
+        opMap.insert("<<", LSHIFT);
+        opMap.insert(">>", RSHIFT);
+        opMap.insert("<=", LE);
+        opMap.insert(">=", GE);
+        opMap.insert("==", EQ);
+        opMap.insert("!=", NE);
+        opMap.insert("&&", AND_AND);
+        opMap.insert("*=", MULT_ASSIGN);
+        opMap.insert("/=", DIV_ASSIGN);
+        opMap.insert("%=", MOD_ASSIGN);
+        opMap.insert("+=", PLUS_ASSIGN);
+        opMap.insert("-=", MINUS_ASSIGN);
+        opMap.insert("<<=", LSHIFT_ASSIGN);
+        opMap.insert(">>=", RSHIFT_ASSIGN);
+        opMap.insert("&=", AND_ASSIGN);
+        opMap.insert("^=", XOR_ASSIGN);
+        opMap.insert("|=", OR_ASSIGN);
+        opMap.insert("##", HASH_HASH);
+        opMap.insert("<:", '[');
+        opMap.insert(":>", ']');
+        opMap.insert("<%", '{');
+        opMap.insert("%>", '}');
+        opMap.insert("%:", '#');
+        opMap.insert("%:%:", HASH_HASH);
+        opMap.insert("...", DOT_DOT_DOT);
     }
-    if (!punctMap.contains(str)) {
+    if (!opMap.contains(str)) {
         qFatal("Unknown punct: %s", str.toAscii().constData());
         return 0;
     }
-    return new ASTNode(punctMap.value(str), pptext);
+    return new ASTToken(opMap.value(str), pptext);
 }
 
-ASTNode *AST::CreatePunct(char ch)
+ASTNode *AST::CreateOp(char ch)
 {
     char str[10];
     sprintf(str, "%c", ch);
-    return CreatePunct(str);
-}
-
-ASTNode *AST::CreateKeyword(int type, const QString &str)
-{
-    return new ASTNode(type, str);
+    return CreateOp(str);
 }
 
 ASTNode *AST::CreateID(const QString &str)
 {
-    return new ASTNode(ID, str);
+    return new ASTToken(ID, str);
 }
 
 ASTNode *AST::CreatePPNumber(const QString &str)
 {
-    return new ASTNode(PP_NUMBER, str);
+    return new ASTToken(PP_NUMBER, str);
 }
 
 ASTNode *AST::CreateCharConstant(const QString &str)
 {
-    return new ASTNode(CHAR_CONSTANT, str);
+    return new ASTToken(CHAR_CONSTANT, str);
 }
 
 ASTNode *AST::CreateStringLiteral(const QString &str)
 {
-    return new ASTNode(STRING_LITERAL, str);
+    return new ASTToken(STRING_LITERAL, str);
 }
 
 ASTNode *AST::CreateNodeList(ASTNode *node)
@@ -150,6 +146,57 @@ ASTNode *AST::CreateNodeList()
 {
     return new ASTNodeList;
 }
+
+ASTNode *AST::CreateInclude(ASTNodeList *list)
+{
+    return new ASTInclude(list);
+}
+
+ASTNode *AST::CreateDefine(ASTToken *id, ASTNodeList *args,
+                           ASTNodeList *body)
+{
+    return new ASTDefine(id, args, body);
+}
+
+ASTNode *AST::CreateDefineVarArgs(ASTToken *id, ASTNodeList *args,
+                           ASTNodeList *body)
+{
+    ASTDefine *def = new ASTDefine(id, args, body);
+    def->setVarArgs(true);
+    return def;
+}
+
+ASTNode *AST::CreateUndef(ASTToken *id)
+{
+    return new ASTUndef(id);
+}
+
+ASTNode *AST::CreateLine(ASTNodeList *list)
+{
+    return new ASTLine(list);
+}
+
+ASTNode *AST::CreateError()
+{
+    return new ASTError(static_cast<ASTNodeList*>(CreateNodeList()));
+}
+
+ASTNode *AST::CreateError(ASTNodeList *list)
+{
+    return new ASTError(list);
+}
+
+ASTNode *AST::CreatePragma(ASTNodeList *list)
+{
+    return new ASTPragma(list);
+}
+
+ASTNode *AST::CreateConstantExpr(ASTNodeList *list)
+{
+    return new ASTConstantExpr(list);
+}
+
+//=============================================================================
 
 class ASTNodeList::Private
 {
@@ -168,9 +215,15 @@ ASTNodeList::~ASTNodeList()
     delete d;
 }
 
+bool ASTNodeList::isEmpty() const
+{
+    return d->list.isEmpty();
+}
+
 void ASTNodeList::append(ASTNode *node)
 {
-    d->list.append(node);
+    if (node)
+        d->list.append(node);
 }
 
 void ASTNodeList::append(const ASTNodeList &nodeList)
@@ -186,6 +239,202 @@ ASTNodeList::iterator ASTNodeList::begin() const
 ASTNodeList::iterator ASTNodeList::end() const
 {
     return d->list.end();
+}
+
+class ASTDefine::Private
+{
+public:
+    ASTToken *id;
+    ASTNodeList *args;
+    ASTNodeList *body;
+    bool vargs;
+};
+
+ASTDefine::ASTDefine(ASTToken *id, ASTNodeList *args, ASTNodeList *body)
+    : ASTNode(DEFINE, "Define"),
+      d(new ASTDefine::Private)
+{
+    d->id = id;
+    d->args = args;
+    d->body = body;
+    d->vargs = false;
+}
+
+ASTDefine::~ASTDefine()
+{
+    delete d;
+}
+
+ASTToken* ASTDefine::id() const
+{
+    return d->id;
+}
+
+ASTNodeList *ASTDefine::args() const
+{
+    return d->args;
+}
+
+ASTNodeList *ASTDefine::body() const
+{
+    return d->body;
+}
+
+bool ASTDefine::isVarArgs() const
+{
+    return d->vargs;
+}
+
+void ASTDefine::setVarArgs(bool vargs)
+{
+    d->vargs = vargs;
+}
+
+class ASTInclude::Private
+{
+public:
+    ASTNodeList *nodeList;
+};
+
+ASTInclude::ASTInclude(ASTNodeList *list)
+    : ASTNode(INCLUDE, "Include"),
+      d(new ASTInclude::Private)
+{
+    d->nodeList = list;
+}
+
+ASTInclude::~ASTInclude()
+{
+    delete d;
+}
+
+ASTNodeList *ASTInclude::nodeList() const
+{
+    return d->nodeList;
+}
+
+class ASTLine::Private
+{
+public:
+    ASTNodeList *nodeList;
+};
+
+ASTLine::ASTLine(ASTNodeList *list)
+    : ASTNode(LINE, "Line"),
+      d(new ASTLine::Private)
+{
+    d->nodeList = list;
+}
+
+ASTLine::~ASTLine()
+{
+    delete d;
+}
+
+ASTNodeList *ASTLine::nodeList() const
+{
+    return d->nodeList;
+}
+
+class ASTError::Private
+{
+public:
+    ASTNodeList *nodeList;
+};
+
+ASTError::ASTError(ASTNodeList *list)
+    : ASTNode(ERROR, "Error"),
+      d(new ASTError::Private)
+{
+    d->nodeList = list;
+}
+
+ASTError::~ASTError()
+{
+    delete d;
+}
+
+ASTNodeList *ASTError::nodeList() const
+{
+    return d->nodeList;
+}
+
+class ASTPragma::Private
+{
+public:
+    ASTNodeList *nodeList;
+};
+
+ASTPragma::ASTPragma(ASTNodeList *list)
+    : ASTNode(PRAGMA, "Pragma"),
+      d(new ASTPragma::Private)
+{
+    d->nodeList = list;
+}
+
+ASTPragma::~ASTPragma()
+{
+    delete d;
+}
+
+ASTNodeList *ASTPragma::nodeList() const
+{
+    return d->nodeList;
+}
+
+class ASTUndef::Private
+{
+public:
+    ASTToken *id;
+};
+
+ASTUndef::ASTUndef(ASTToken *id)
+    : ASTNode(UNDEF, "Undef"),
+      d(new ASTUndef::Private)
+{
+    d->id = id;
+}
+
+ASTUndef::~ASTUndef()
+{
+    delete d;
+}
+
+ASTToken* ASTUndef::id() const
+{
+    return d->id;
+}
+
+ASTToken::ASTToken(int t, const QString &name)
+    : ASTNode(t, name)
+{
+}
+
+ASTToken::~ASTToken()
+{
+}
+
+class ASTConstantExpr::Private
+{
+public:
+    ASTNodeList *nodeList;
+};
+
+ASTConstantExpr::ASTConstantExpr(ASTNodeList *list)
+    : ASTNode(CONSTANT_EXPR, "ConstantExpression"),
+      d(new ASTConstantExpr::Private)
+{
+    d->nodeList = list;
+}
+
+ASTConstantExpr::~ASTConstantExpr()
+{
+    delete d;
+}
+
+ASTNodeList *ASTConstantExpr::nodeList() const
+{
+    return d->nodeList;
 }
 
 }

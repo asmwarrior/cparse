@@ -18,12 +18,16 @@ LEXSOURCES += \
 YACCSOURCES += \
     pp.y
 
-QMAKE_YACCFLAGS = -d --report=all
+QMAKE_YACCFLAGS = -t -d --report=all
 
 SOURCES += main.cpp \
-    ppast.cpp
+    ppast.cpp \
+    pp.cpp \
+    ppcontext.cpp
 
 HEADERS += \
-    ppast.h
+    ppast.h \
+    pp.h \
+    ppcontext.h
 
 

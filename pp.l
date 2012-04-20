@@ -7,6 +7,7 @@ typedef PP::ASTNode *YYSTYPE;
 #include "pp_yacc.h"
 %}
 %option noyywrap nodefault yylineno
+%option header-file="pp_lex.h"
 
 %s SDEFINE
 
@@ -46,65 +47,39 @@ ws                  [ \t]
 newline             \n
 
 %%
-auto                {return AUTO;}
-break               {return BREAK;}
-case                {return CASE;}
-char                {return CHAR;}
-const               {return CONST;}
-continue            {return CONTINUE;}
-default             {return DEFAULT;}
-do                  {return DO;}
-double              {return DOUBLE;}
-else                {return ELSE;}
-enum                {return ENUM;}
-extern              {return EXTERN;}
-float               {return FLOAT;}
-for                 {return FOR;}
-goto                {return GOTO;}
-if                  {return IF;}
-inline              {return INLINE;}
-int                 {return INT;}
-long                {return LONG;}
-register            {return REGISTER;}
-restrict            {return RESTRICT;}
-return              {return RETURN;}
-short               {return SHORT;}
-signed              {return SIGNED;}
-sizeof              {return SIZEOF;}
-static              {return STATIC;}
-struct              {return STRUCT;}
-switch              {return SWITCH;}
-typedef             {return TYPEDEF;}
-union               {return UNION;}
-unsigned            {return UNSIGNED;}
-void                {return VOID;}
-volatile            {return VOLATILE;}
-while               {return WHILE;}
-_Bool               {return _BOOL;}
-_Complex            {return _COMPLEX;}
-_Imaginary          {return _IMAGINARY;}
-
 ifdef               {return IFDEF;}
 ifndef              {return IFNDEF;}
 elif                {return ELIF;}
+else                {return ELSE;}
 endif               {return ENDIF;}
 include             {return INCLUDE;}
 define              {BEGIN(SDEFINE);return DEFINE;}
+defined             {pplval = PP::AST::CreateOp(yytext); return DEFINED;}
 undef               {return UNDEF;}
 line                {return LINE;}
 error               {return ERROR;}
 pragma              {return PRAGMA;}
 
-{id}                {return ID;}
-{pp_number}         {return PP_NUMBER;}
-{char_constant}     {return CHAR_CONSTANT;}
-{string_literal}    {return STRING_LITERAL;}
-
-<SDEFINE>{id}\(     {BEGIN(0);return ID_FUNC;}
-
+{id}                {pplval = PP::AST::CreateID(yytext); return ID;}
+{pp_number}         {pplval = PP::AST::CreatePPNumber(yytext); return PP_NUMBER;}
+{char_constant}     {
+    pplval = PP::AST::CreateCharConstant(yytext);
+    return CHAR_CONSTANT;
+                    }
+{string_literal}    {
+    pplval = PP::AST::CreateStringLiteral(yytext);
+    return STRING_LITERAL;
+                    }
+<SDEFINE>{id}\(     {
+    QString str(yytext);
+    str.chop(1);
+    pplval = PP::AST::CreateID(str);
+    BEGIN(0);
+    return ID_FUNC;
+}
 {newline}           {return NEWLINE;}
 {ws}
-{punct}             {pplval = PP::AST::CreatePunct(yytext); return pplval->type();}
-.                   {pplval = PP::AST::CreatePunct(yytext[0]); return pplval->type();}
+{punct}             {pplval = PP::AST::CreateOp(yytext); return pplval->type();}
+.                   {pplval = PP::AST::CreateOp(yytext[0]); return pplval->type();}
 
 %%
