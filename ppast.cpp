@@ -1,13 +1,12 @@
 #include "ppast.h"
+#include "ppastvisitor.h"
 #include "pp_yacc.h"
 #include <QString>
 #include <QList>
 #include <QMap>
+#include <QObject>
+#include <QMetaMethod>
 #include <QDebug>
-
-extern char *pptext;
-extern int ppleng;
-extern int pplineno;
 
 namespace PP {
 
@@ -38,6 +37,21 @@ int ASTNode::type() const
 QString ASTNode::spellName() const
 {
     return d->name;
+}
+
+void ASTNode::accept(ASTVisitor *visitor)
+{
+    QString cName = metaObject()->className();
+    QString mName;
+    int idx;
+    idx = cName.lastIndexOf("::");
+    if (idx != -1)
+        cName.remove(0, idx+2);    // remove XX:: Namespace prefix
+    mName = cName;
+    mName.remove(0, 3);    // remove AST prefix
+    mName.prepend("visit");
+    visitor->metaObject()->invokeMethod(visitor, mName.toAscii().constData(),
+                                        Q_ARG(ASTNode *, this));
 }
 
 ASTNode *AST::CreateOp(const QString &str)
@@ -105,7 +119,7 @@ ASTNode *AST::CreateOp(const QString &str)
         qFatal("Unknown punct: %s", str.toAscii().constData());
         return 0;
     }
-    return new ASTToken(opMap.value(str), pptext);
+    return new ASTToken(opMap.value(str), str);
 }
 
 ASTNode *AST::CreateOp(char ch)
@@ -135,31 +149,35 @@ ASTNode *AST::CreateStringLiteral(const QString &str)
     return new ASTToken(STRING_LITERAL, str);
 }
 
-ASTNode *AST::CreateNodeList(ASTNode *node)
+ASTNode *AST::CreateTokens(ASTToken *token)
 {
-    ASTNodeList *nodeList = new ASTNodeList;
-    nodeList->append(node);
-    return nodeList;
+    ASTTokens *tokens = new ASTTokens;
+    tokens->append(token);
+    return tokens;
 }
 
-ASTNode *AST::CreateNodeList()
+ASTNode *AST::CreateTokens()
 {
-    return new ASTNodeList;
+    return new ASTTokens();
 }
 
-ASTNode *AST::CreateInclude(ASTNodeList *list)
+ASTNode *AST::CreateInclude(ASTTokens *tokens)
 {
-    return new ASTInclude(list);
+    ASTInclude *inc;
+    inc = new ASTInclude();
+    inc->append(*tokens);
+    delete tokens;
+    return inc;
 }
 
-ASTNode *AST::CreateDefine(ASTToken *id, ASTNodeList *args,
-                           ASTNodeList *body)
+ASTNode *AST::CreateDefine(ASTToken *id, ASTTokens *args,
+                           ASTTokens *body)
 {
     return new ASTDefine(id, args, body);
 }
 
-ASTNode *AST::CreateDefineVarArgs(ASTToken *id, ASTNodeList *args,
-                           ASTNodeList *body)
+ASTNode *AST::CreateDefineVarArgs(ASTToken *id, ASTTokens *args,
+                           ASTTokens *body)
 {
     ASTDefine *def = new ASTDefine(id, args, body);
     def->setVarArgs(true);
@@ -171,29 +189,74 @@ ASTNode *AST::CreateUndef(ASTToken *id)
     return new ASTUndef(id);
 }
 
-ASTNode *AST::CreateLine(ASTNodeList *list)
+ASTNode *AST::CreateLine(ASTTokens *tokens)
 {
-    return new ASTLine(list);
+    ASTLine *line = new ASTLine();
+    line->append(*tokens);
+    delete tokens;
+    return line;
 }
 
 ASTNode *AST::CreateError()
 {
-    return new ASTError(static_cast<ASTNodeList*>(CreateNodeList()));
+    ASTError *err = new ASTError();
+    return err;
 }
 
-ASTNode *AST::CreateError(ASTNodeList *list)
+ASTNode *AST::CreateError(ASTTokens *tokens)
 {
-    return new ASTError(list);
+    ASTError *err = new ASTError();
+    err->append(*tokens);
+    delete tokens;
+    return err;
 }
 
-ASTNode *AST::CreatePragma(ASTNodeList *list)
+ASTNode *AST::CreatePragma()
 {
-    return new ASTPragma(list);
+    return new ASTPragma();
 }
 
-ASTNode *AST::CreateConstantExpr(ASTNodeList *list)
+ASTNode *AST::CreatePragma(ASTTokens *tokens)
 {
-    return new ASTConstantExpr(list);
+    ASTPragma *pragma = new ASTPragma();
+    pragma->append(*tokens);
+    delete tokens;
+    return pragma;
+}
+
+ASTNode *AST::CreateNonDirective()
+{
+    return new ASTNonDirective();
+}
+
+ASTNode *AST::CreateNonDirective(ASTTokens *tokens)
+{
+    ASTNonDirective *nond = new ASTNonDirective();
+    nond->append(*tokens);
+    delete tokens;
+    return nond;
+}
+
+ASTNode *AST::CreateTextLine()
+{
+    return new ASTTextLine();
+}
+
+ASTNode *AST::CreateTextLine(ASTTokens *tokens)
+{
+    ASTTextLine *tl;
+    tl = new ASTTextLine();
+    tl->append(*tokens);
+    delete tokens;
+    return tl;
+}
+
+ASTNode *AST::CreateConstantExpr(ASTTokens *tokens)
+{
+    ASTConstantExpr *constExpr = new ASTConstantExpr();
+    constExpr->append(*tokens);
+    delete tokens;
+    return constExpr;
 }
 
 //=============================================================================
@@ -201,11 +264,12 @@ ASTNode *AST::CreateConstantExpr(ASTNodeList *list)
 class ASTNodeList::Private
 {
 public:
+    Private() {list.clear();}
     QList<ASTNode*> list;
 };
 
-ASTNodeList::ASTNodeList()
-    : ASTNode(NODE_LIST, "NodeList"),
+ASTNodeList::ASTNodeList(int type, const QString &name)
+    : ASTNode(type, name),
       d(new ASTNodeList::Private)
 {
 }
@@ -239,6 +303,11 @@ ASTNodeList::iterator ASTNodeList::begin() const
 ASTNodeList::iterator ASTNodeList::end() const
 {
     return d->list.end();
+}
+
+QList<ASTNode *> &ASTNodeList::nodeList()
+{
+    return d->list;
 }
 
 class ASTDefine::Private
@@ -290,96 +359,40 @@ void ASTDefine::setVarArgs(bool vargs)
     d->vargs = vargs;
 }
 
-class ASTInclude::Private
+ASTInclude::ASTInclude()
+    : ASTNodeList(INCLUDE, "Include")
 {
-public:
-    ASTNodeList *nodeList;
-};
-
-ASTInclude::ASTInclude(ASTNodeList *list)
-    : ASTNode(INCLUDE, "Include"),
-      d(new ASTInclude::Private)
-{
-    d->nodeList = list;
 }
 
 ASTInclude::~ASTInclude()
 {
-    delete d;
 }
 
-ASTNodeList *ASTInclude::nodeList() const
+ASTLine::ASTLine()
+    : ASTNodeList(LINE, "Line")
 {
-    return d->nodeList;
-}
-
-class ASTLine::Private
-{
-public:
-    ASTNodeList *nodeList;
-};
-
-ASTLine::ASTLine(ASTNodeList *list)
-    : ASTNode(LINE, "Line"),
-      d(new ASTLine::Private)
-{
-    d->nodeList = list;
 }
 
 ASTLine::~ASTLine()
 {
-    delete d;
 }
 
-ASTNodeList *ASTLine::nodeList() const
+ASTError::ASTError()
+    : ASTNodeList(ERROR, "Error")
 {
-    return d->nodeList;
-}
-
-class ASTError::Private
-{
-public:
-    ASTNodeList *nodeList;
-};
-
-ASTError::ASTError(ASTNodeList *list)
-    : ASTNode(ERROR, "Error"),
-      d(new ASTError::Private)
-{
-    d->nodeList = list;
 }
 
 ASTError::~ASTError()
 {
-    delete d;
 }
 
-ASTNodeList *ASTError::nodeList() const
+ASTPragma::ASTPragma()
+    : ASTNodeList(PRAGMA, "Pragma")
 {
-    return d->nodeList;
-}
-
-class ASTPragma::Private
-{
-public:
-    ASTNodeList *nodeList;
-};
-
-ASTPragma::ASTPragma(ASTNodeList *list)
-    : ASTNode(PRAGMA, "Pragma"),
-      d(new ASTPragma::Private)
-{
-    d->nodeList = list;
 }
 
 ASTPragma::~ASTPragma()
 {
-    delete d;
-}
-
-ASTNodeList *ASTPragma::nodeList() const
-{
-    return d->nodeList;
 }
 
 class ASTUndef::Private
@@ -414,27 +427,215 @@ ASTToken::~ASTToken()
 {
 }
 
-class ASTConstantExpr::Private
+ASTConstantExpr::ASTConstantExpr()
+    : ASTNodeList(CONSTANT_EXPR, "ConstantExpression")
 {
-public:
-    ASTNodeList *nodeList;
-};
-
-ASTConstantExpr::ASTConstantExpr(ASTNodeList *list)
-    : ASTNode(CONSTANT_EXPR, "ConstantExpression"),
-      d(new ASTConstantExpr::Private)
-{
-    d->nodeList = list;
 }
 
 ASTConstantExpr::~ASTConstantExpr()
 {
+}
+
+ASTTokens::ASTTokens()
+    : ASTNodeList(TOKENS, "Tokens")
+{
+}
+
+ASTTokens::~ASTTokens()
+{
+}
+
+class ASTElifElement::Private
+{
+public:
+    ASTGroup *group;
+    ASTConstantExpr *expr;
+};
+
+ASTElifElement::ASTElifElement(ASTGroup *group, ASTConstantExpr *expr)
+    : ASTNode(ELIF_ELEM, "Elif element"),
+      d(new ASTElifElement::Private)
+{
+    d->group = group;
+    d->expr = expr;
+}
+
+ASTElifElement::~ASTElifElement()
+{
     delete d;
 }
 
-ASTNodeList *ASTConstantExpr::nodeList() const
+ASTGroup *ASTElifElement::group() const
 {
-    return d->nodeList;
+    return d->group;
+}
+
+ASTConstantExpr *ASTElifElement::expr() const
+{
+    return d->expr;
+}
+
+ASTElifGroup::ASTElifGroup()
+    : ASTNodeList(ELIF_GROUP, "Elif group")
+{
+}
+
+ASTElifGroup::~ASTElifGroup()
+{
+}
+
+class ASTIfGroup::Private
+{
+public:
+    ASTConstantExpr *expr;
+    ASTGroup *trueBranch;
+    ASTGroup *falseBranch;
+};
+
+ASTIfGroup::ASTIfGroup()
+    : ASTNode(IF_GROUP, "If group"),
+      d(new ASTIfGroup::Private)
+{
+}
+
+ASTIfGroup::~ASTIfGroup()
+{
+    delete d;
+}
+
+void ASTIfGroup::setExpr(ASTConstantExpr *expr)
+{
+    d->expr = expr;
+}
+
+void ASTIfGroup::setTrueBranch(ASTGroup *group)
+{
+    d->trueBranch = group;
+}
+
+void ASTIfGroup::setFalseBranch(ASTGroup *group)
+{
+    d->falseBranch = group;
+}
+
+ASTConstantExpr *ASTIfGroup::expr() const
+{
+    return d->expr;
+}
+
+ASTGroup *ASTIfGroup::trueBranch() const
+{
+    return d->trueBranch;
+}
+
+ASTGroup *ASTIfGroup::falseBranch() const
+{
+    return d->falseBranch;
+}
+
+ASTGroup::ASTGroup()
+    : ASTNodeList(GROUP, "Group")
+{
+}
+
+ASTGroup::~ASTGroup()
+{
+}
+
+ASTNonDirective::ASTNonDirective()
+    : ASTNodeList(NON_DIRECTIVE, "Non directive")
+{
+}
+
+ASTNonDirective::~ASTNonDirective()
+{
+}
+
+ASTNode *AST::CreateGroup(ASTNode *groupPart)
+{
+    ASTGroup *group = new ASTGroup();
+    group->append(groupPart);
+    return group;
+}
+
+ASTNode *AST::CreateIfExpr(ASTConstantExpr *expr)
+{
+    return expr;
+}
+
+ASTNode *AST::CreateIfdefExpr(ASTToken *id)
+{
+    ASTConstantExpr *expr = new ASTConstantExpr();
+    expr->append(CreateOp("defined"));
+    expr->append(CreateOp('('));
+    expr->append(id);
+    expr->append(CreateOp(')'));
+    return expr;
+}
+
+ASTNode *AST::CreateIfndefExpr(ASTToken *id)
+{
+    ASTConstantExpr *expr = new ASTConstantExpr();
+    expr->append(CreateOp('!'));
+    expr->append(CreateOp("defined"));
+    expr->append(CreateOp('('));
+    expr->append(id);
+    expr->append(CreateOp(')'));
+    return expr;
+}
+
+ASTNode *AST::CreateIfGroup(ASTConstantExpr *expr, ASTGroup *trueBranch, ASTGroup *falseBranch)
+{
+    return CreateIfGroup(expr, NULL, trueBranch, falseBranch);
+}
+
+ASTNode *AST::CreateIfGroup(ASTConstantExpr *expr, ASTElifGroup *elifGroup, ASTGroup *groupAfterElif, ASTGroup *elseBranch)
+{
+    ASTIfGroup *ifGroup, *aif, *bif;
+    ASTElifElement *elem;
+
+    ifGroup = new ASTIfGroup();
+    ifGroup->setExpr(expr);
+    aif = ifGroup;
+    if (elifGroup)
+        for (ASTNodeList::iterator iter = elifGroup->begin();
+             iter != elifGroup->end(); iter++) {
+
+            elem = static_cast<ASTElifElement*>(*iter);
+            aif->setTrueBranch(elem->group());
+            bif = new ASTIfGroup();
+            bif->setExpr(elem->expr());
+            aif->setFalseBranch(static_cast<ASTGroup*>(CreateGroup(bif)));
+            aif = bif;
+        }
+    aif->setTrueBranch(groupAfterElif);
+    aif->setFalseBranch(elseBranch);
+    return ifGroup;
+}
+
+ASTNode *AST::CreateElifGroup(ASTElifGroup *elifGroup, ASTGroup *group, ASTConstantExpr *expr)
+{
+    elifGroup->append(new ASTElifElement(group, expr));
+    return elifGroup;
+}
+
+ASTNode *AST::CreateElifGroup(ASTGroup *group, ASTConstantExpr *expr)
+{
+    ASTElifGroup *elifGroup = new ASTElifGroup;
+    ASTElifElement *elifElem = new ASTElifElement(group, expr);
+    elifGroup->append(elifElem);
+    return elifGroup;
+}
+
+ASTTextLine::ASTTextLine()
+    : ASTNodeList(TEXT_LINE, "TextLine")
+{
+}
+
+ASTTextLine::~ASTTextLine()
+{
 }
 
 }
+
+#include "moc_ppast.cpp"

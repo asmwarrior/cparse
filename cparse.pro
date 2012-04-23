@@ -23,11 +23,17 @@ QMAKE_YACCFLAGS = -t -d --report=all
 SOURCES += main.cpp \
     ppast.cpp \
     pp.cpp \
-    ppcontext.cpp
+    ppcontext.cpp \
+    ppastvisitor.cpp \
+    ppdumpvisitor.cpp \
+    ppevalvisitor.cpp
 
 HEADERS += \
     ppast.h \
     pp.h \
-    ppcontext.h
+    ppcontext.h \
+    ppastvisitor.h \
+    ppdumpvisitor.h \
+    ppevalvisitor.h
 
 

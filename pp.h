@@ -4,8 +4,9 @@
 #include <stdio.h>
 
 namespace PP {
-int parseString(const char *str);
-int parseFile(FILE *f);
+class ASTNode;
+int parseString(ASTNode **proot, const char *str);
+int parseFile(ASTNode **proot, FILE *f);
 }
 
 #endif // PP_H

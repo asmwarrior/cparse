@@ -14,10 +14,10 @@ typedef ASTNode *YYSTYPE;
 extern int pplineno;
 extern int pplex();
 extern ASTNode *pplval;
-void pperror(Context *ctx, const char *);
+void pperror(ASTNode **proot, const char *);
 %}
 
-%parse-param    {Context *ctx}
+%parse-param    {ASTNode **proot}
 %token AUTO
 %token BREAK
 %token CASE
@@ -103,24 +103,28 @@ void pperror(Context *ctx, const char *);
 %token ID_FUNC
 
 /* fake tokens introduced by parser */
-%token IF_GROUP
-%token TEXT_LINE
+%token GROUP
 %token NON_DIRECTIVE
+%token IF_GROUP
+%token ELIF_GROUP
+%token ELIF_ELEM
+%token TOKENS
+%token TEXT_LINE
 %token NODE_LIST
 %token CONSTANT_EXPR
 
 %%
 
-pp_file :group  {$$ = $1;}
-        |       {$$ = NULL;}
+pp_file :group  {$$ = $1; *proot = $$;}
+        |       {$$ = NULL; *proot = $$;}
         ;
 group   :group_part {$$ = AST::CreateGroup($1);}
-        |group group_part {$$ = AST::CreateGroup(static_cast<AST::Group*>($1), $2);}
+        |group group_part {static_cast<ASTGroup*>($1)->append($2); $$ = $1;}
         ;
 group_part  :if_group {$$ = $1;}
             |control_line {$$ = $1;}
             |text_line {$$ = $1;}
-            |'#' non_directive {$$ = AST::CreateNonDirective(static_cast<ASTNodeList*>($2));}
+            |'#' non_directive {$$ = AST::CreateNonDirective(static_cast<ASTTokens*>($2));}
             ;
 if_group    : ifs_line group endif_line 
 {
@@ -137,14 +141,14 @@ if_group    : ifs_line group endif_line
             | ifs_line elif_group endif_line
 {
     $$ = AST::CreateIfGroup(static_cast<ASTConstantExpr*>($1),
-            static_cast<ASTElIfGroup*>($2),
+            static_cast<ASTElifGroup*>($2),
             NULL,
             NULL);
 }
             | ifs_line elif_group group endif_line
 {
     $$ = AST::CreateIfGroup(static_cast<ASTConstantExpr*>($1),
-            static_cast<ASTElIfGroup*>($2),
+            static_cast<ASTElifGroup*>($2),
             static_cast<ASTGroup*>($3),
             NULL);
 }
@@ -163,57 +167,66 @@ if_group    : ifs_line group endif_line
             | ifs_line elif_group else_line endif_line
 {
     $$ = AST::CreateIfGroup(static_cast<ASTConstantExpr*>($1),
-            static_cast<ASTElIfGroup*>($2),
+            static_cast<ASTElifGroup*>($2),
             NULL,
             NULL);
 }
             | ifs_line elif_group group else_line endif_line
 {
     $$ = AST::CreateIfGroup(static_cast<ASTConstantExpr*>($1),
-            static_cast<ASTElIfGroup*>($2),
+            static_cast<ASTElifGroup*>($2),
             static_cast<ASTGroup*>($3),
             NULL);
 }
             | ifs_line elif_group else_line group endif_line
 {
     $$ = AST::CreateIfGroup(static_cast<ASTConstantExpr*>($1),
-            static_cast<ASTElIfGroup*>($2),
+            static_cast<ASTElifGroup*>($2),
             NULL,
             static_cast<ASTGroup*>($4));
 }
             | ifs_line elif_group group else_line group endif_line
 {
     $$ = AST::CreateIfGroup(static_cast<ASTConstantExpr*>($1),
-            static_cast<ASTElIfGroup*>($2),
+            static_cast<ASTElifGroup*>($2),
             static_cast<ASTGroup*>($3),
             static_cast<ASTGroup*>($5));
 }
             ;
 elif_group  : group elif_line   {
-                  $$ = CreateElIfGroup(static_cast<ASTGroup*>($1), 
+                  $$ = AST::CreateElifGroup(static_cast<ASTGroup*>($1),
                                        static_cast<ASTConstantExpr*>($2));
                                 }
             | elif_line         {
-                  $$ = CreateElIfGroup(NULL,
+                  $$ = AST::CreateElifGroup(NULL,
                                        static_cast<ASTConstantExpr*>($1));
                                 }
              
             | elif_group group elif_line
 {
-    $$ = CreateElIfGroup(static_cast<ASTElIfGroup*>($1), 
-            static_cast<ASTGroup*>($2), 
-            static_cast<ASTConstantExpr*>($3));
+    $$ = AST::CreateElifGroup(static_cast<ASTElifGroup *>($1),
+        static_cast<ASTGroup *>($2),
+        static_cast<ASTConstantExpr *>($3));
 }
             | elif_group elif_line
 {
-    $$ = CreateElIfGroup(static_cast<ASTElIfGroup*>($1), 
+    $$ = AST::CreateElifGroup(static_cast<ASTElifGroup*>($1),
             NULL,
             static_cast<ASTConstantExpr*>($2));
 }
             ;
-ifs_line    : '#' IF constant_expr NEWLINE      {$$ = CreateIf(static_cast<ASTConstantExpr*>($3));}
-            | '#' IFDEF ID NEWLINE              {$$ = CreateIfdef(static_cast<ASTToken*>($3));}
-            | '#' IFNDEF ID NEWLINE             {$$ = CreateIfndef(static_cast<ASTToken*>($3));}
+ifs_line    : '#' IF constant_expr NEWLINE
+{
+    $$ = AST::CreateIfExpr(static_cast<ASTConstantExpr*>($3));
+}
+            | '#' IFDEF ID NEWLINE
+{
+    $$ = AST::CreateIfdefExpr(static_cast<ASTToken*>($3));
+}
+            | '#' IFNDEF ID NEWLINE
+{
+    $$ = AST::CreateIfndefExpr(static_cast<ASTToken*>($3));
+}
             ;
 elif_line   : '#' ELIF constant_expr NEWLINE    {$$=$3;}
             ;
@@ -223,7 +236,7 @@ endif_line  : '#' ENDIF NEWLINE
             ;
 control_line: '#' INCLUDE pp_tokens NEWLINE
 {
-    $$ = AST::CreateInclude(static_cast<ASTNodeList*>($3));
+    $$ = AST::CreateInclude(static_cast<ASTTokens*>($3));
 }
             | '#' DEFINE ID NEWLINE                   
 {
@@ -235,60 +248,72 @@ control_line: '#' INCLUDE pp_tokens NEWLINE
 {
     $$ = AST::CreateDefine(static_cast<ASTToken*>($3),
                                NULL,
-                               static_cast<ASTNodeList*>($4));
+                               static_cast<ASTTokens*>($4));
 }
             | '#' DEFINE ID_FUNC  id_list ')' replacement_list NEWLINE
 {
     $$ = AST::CreateDefine(static_cast<ASTToken*>($3),
-                               static_cast<ASTNodeList*>($4),
-                               static_cast<ASTNodeList*>($6));
+                               static_cast<ASTTokens*>($4),
+                               static_cast<ASTTokens*>($6));
 }
             | '#' DEFINE ID_FUNC ')' replacement_list NEWLINE
 {
     $$ = AST::CreateDefine(static_cast<ASTToken*>($3),
-                               static_cast<ASTNodeList*>(AST::CreateNodeList()),
-                               static_cast<ASTNodeList*>($5));
+                               static_cast<ASTTokens*>(AST::CreateTokens()),
+                               static_cast<ASTTokens*>($5));
 }
             | '#' DEFINE ID_FUNC "..." ')' replacement_list NEWLINE
 {
     $$ = AST::CreateDefineVarArgs(static_cast<ASTToken*>($3),
-                                      static_cast<ASTNodeList*>(AST::CreateNodeList()),
-                                      static_cast<ASTNodeList*>($6));
+                                      static_cast<ASTTokens*>(AST::CreateTokens()),
+                                      static_cast<ASTTokens*>($6));
 }
             | '#' DEFINE ID_FUNC id_list ',' "..." ')' replacement_list NEWLINE
 {
     $$ = AST::CreateDefineVarArgs(static_cast<ASTToken*>($3),
-                                      static_cast<ASTNodeList*>($4),
-                                      static_cast<ASTNodeList*>($8));
+                                      static_cast<ASTTokens*>($4),
+                                      static_cast<ASTTokens*>($8));
 }
             | '#' UNDEF ID NEWLINE  {
                 $$=AST::CreateUndef(static_cast<ASTToken*>($3));
                                     }
             | '#' LINE pp_tokens NEWLINE    {
-                $$=AST::CreateLine(static_cast<ASTNodeList*>($3));
+                $$=AST::CreateLine(static_cast<ASTTokens*>($3));
                                             }
-            | '#' ERROR NEWLINE     {$$=AST::CreateNodeList();}
+            | '#' ERROR NEWLINE     {$$=AST::CreateTokens();}
             | '#' ERROR pp_tokens NEWLINE   {
-                $$=AST::CreateError(static_cast<ASTNodeList*>($3));
+                $$=AST::CreateError(static_cast<ASTTokens*>($3));
                                             }
-            | '#' PRAGMA NEWLINE    {$$=AST::CreateEmpty("Empty pragma line");}
-            | '#' PRAGMA pp_tokens NEWLINE  {}
-            | '#' NEWLINE           {$$=AST::CreateEmpty("Empty control line");}
+            | '#' PRAGMA NEWLINE    {$$=AST::CreatePragma();}
+            | '#' PRAGMA pp_tokens NEWLINE
+{
+    $$=AST::CreatePragma(static_cast<ASTTokens *>($3));
+}
+            | '#' NEWLINE           {$$=AST::CreateNonDirective();}
             ;
-text_line   : NEWLINE               {$$=AST::CreateEmpty("Empty text line");}
-            | pp_tokens NEWLINE     {$$=$1;}
+text_line   : NEWLINE               {$$=AST::CreateTextLine();}
+            | pp_tokens NEWLINE
+{
+    $$ = AST::CreateTextLine(static_cast<ASTTokens *>($1));
+}
             ;
-non_directive   : pp_tokens NEWLINE {$$=$1;}
+non_directive   : pp_tokens NEWLINE
+{
+    $$ = AST::CreateNonDirective(static_cast<ASTTokens *>($1));
+}
                 ;
-id_list     : ID                {$$=AST::CreateNodeList($1);}
-            | id_list ',' ID    {static_cast<ASTNodeList*>($1)->append($2); $$=$1;}
+id_list     : ID                {$$=AST::CreateTokens(static_cast<ASTToken *>($1));}
+            | id_list ',' ID    {static_cast<ASTTokens*>($1)->append($3); $$=$1;}
             ;
 replacement_list: pp_tokens     {$$=$1;}
                 ;
-constant_expr   : pp_tokens     {$$=AST::CreateConstantExpr(static_cast<ASTNodeList*>($1));}
+constant_expr   : pp_tokens
+{
+    $$ = AST::CreateConstantExpr(static_cast<ASTTokens*>($1));
+}
                 ;
-pp_tokens   : pp_token          {$$=AST::CreateNodeList($1);}
-            | pp_tokens pp_token{static_cast<ASTNodeList*>($1)->append($2); $$=$1;}
+pp_tokens   : pp_token          {$$=AST::CreateTokens(static_cast<ASTToken *>($1));}
+            | pp_tokens pp_token{static_cast<ASTTokens*>($1)->append($2); $$=$1;}
             ;
 pp_token    : ID                {$$=$1;}
             | PP_NUMBER         {$$=$1;}
@@ -346,7 +371,7 @@ pp_token    : ID                {$$=$1;}
 
 %%
 
-void pperror(Context *ctx, const char *str)
+void pperror(ASTNode **proot, const char *str)
 {
     fprintf(stderr, "%d:%s\n", pplineno, str);
 }

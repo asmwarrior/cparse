@@ -4,30 +4,28 @@
 #include "pp_yacc.h"
 #include <stdio.h>
 
-extern int ppparse(PP::Context *ctx);
+extern int ppparse(PP::ASTNode **proot);
 
 namespace PP {
-int parseString(const char *str)
+int parseString(ASTNode **proot, const char *str)
 {
     int ret;
-    Context ctx;
     YY_BUFFER_STATE buf;
     buf = pp_scan_string(str);
     pppush_buffer_state(buf);
-    ret = ppparse(&ctx);
+    ret = ppparse(proot);
     pp_flush_buffer(buf);
     pppop_buffer_state();
     return ret;
 }
 
-int parseFile(FILE *f)
+int parseFile(ASTNode **proot, FILE *f)
 {
     int ret;
-    Context ctx;
     YY_BUFFER_STATE buf;
     buf = pp_create_buffer(f, YY_BUF_SIZE);
     pppush_buffer_state(buf);
-    ret = ppparse(&ctx);
+    ret = ppparse(proot);
     pp_flush_buffer(buf);
     pppop_buffer_state();
     return ret;

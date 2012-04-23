@@ -47,6 +47,7 @@ ws                  [ \t]
 newline             \n
 
 %%
+if                  {return IF;}
 ifdef               {return IFDEF;}
 ifndef              {return IFNDEF;}
 elif                {return ELIF;}

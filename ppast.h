@@ -2,49 +2,74 @@
 #define PPAST_H
 
 #include <QString>
+#include <QPair>
 #include <QList>
+#include <QObject>
 
 namespace PP {
 
+class ASTConstantExpr;
+class ASTElifGroup;
+class ASTGroup;
+class ASTIfGroup;
 class ASTNode;
-class ASTToken;
 class ASTNodeList;
+class ASTToken;
+class ASTTokens;
+class ASTTextLine;
 class AST
 {
 public:
+    static ASTNode *CreateGroup(ASTNode *groupPart);
+    static ASTNode *CreateIfExpr(ASTConstantExpr *expr);
+    static ASTNode *CreateIfdefExpr(ASTToken *id);
+    static ASTNode *CreateIfndefExpr(ASTToken *id);
+    static ASTNode *CreateIfGroup(ASTConstantExpr *expr, ASTGroup *trueBranch,
+                                  ASTGroup *falseBranch);
+    static ASTNode *CreateIfGroup(ASTConstantExpr *expr, ASTElifGroup *elifGroup,
+                                  ASTGroup *groupAfterElif, ASTGroup *elseBranch);
+    static ASTNode *CreateElifGroup(ASTElifGroup *elifGroup, ASTGroup *group,
+                                    ASTConstantExpr *expr);
+    static ASTNode *CreateElifGroup(ASTGroup *group, ASTConstantExpr *expr);
     static ASTNode *CreateOp(const QString &str);
     static ASTNode *CreateOp(char ch);
     static ASTNode *CreateID(const QString &str);
     static ASTNode *CreatePPNumber(const QString &str);
     static ASTNode *CreateCharConstant(const QString &str);
     static ASTNode *CreateStringLiteral(const QString &str);
-    static ASTNode *CreateNodeList(const QList<ASTNode*> &list);
-    static ASTNode *CreateNodeList(ASTNode* list);
-    static ASTNode *CreateNodeList();
-    static ASTNode *CreateInclude(ASTNodeList *list);
-    static ASTNode *CreateDefine(ASTToken *id, ASTNodeList *args,
-                                 ASTNodeList *body);
-    static ASTNode *CreateDefineVarArgs(ASTToken *id, ASTNodeList *args,
-                                 ASTNodeList *body);
+    static ASTNode *CreateTokens(ASTToken* token);
+    static ASTNode *CreateTokens();
+    static ASTNode *CreateInclude(ASTTokens *tokens);
+    static ASTNode *CreateDefine(ASTToken *id, ASTTokens *args,
+                                 ASTTokens *body);
+    static ASTNode *CreateDefineVarArgs(ASTToken *id, ASTTokens *args,
+                                 ASTTokens *body);
     static ASTNode *CreateUndef(ASTToken *id);
-    static ASTNode *CreateLine(ASTNodeList *list);
+    static ASTNode *CreateLine(ASTTokens *tokens);
     static ASTNode *CreateError();
-    static ASTNode *CreateError(ASTNodeList *list);
-    static ASTNode *CreatePragma(ASTNodeList *list);
-    static ASTNode *CreateConstantExpr(ASTNodeList *list);
+    static ASTNode *CreateError(ASTTokens *tokens);
+    static ASTNode *CreatePragma();
+    static ASTNode *CreatePragma(ASTTokens *tokens);
+    static ASTNode *CreateNonDirective();
+    static ASTNode *CreateNonDirective(ASTTokens *tokens);
+    static ASTNode *CreateTextLine();
+    static ASTNode *CreateTextLine(ASTTokens *tokens);
+    static ASTNode *CreateConstantExpr(ASTTokens *tokens);
 private:
     AST();
     AST(const AST &);
 };
 
-
-class ASTNode
+class ASTVisitor;
+class ASTNode: public QObject
 {
+    Q_OBJECT
 public:
     ASTNode(int t, const QString &name);
     virtual ~ASTNode();
     int type() const;
     QString spellName() const;
+    virtual void accept(ASTVisitor *visitor);
 private:
     class Private;
     Private *d;
@@ -52,6 +77,7 @@ private:
 
 class ASTToken : public ASTNode
 {
+    Q_OBJECT
 public:
     ASTToken(int t, const QString &name);
     virtual ~ASTToken();
@@ -59,15 +85,17 @@ public:
 
 class ASTNodeList: public ASTNode
 {
+    Q_OBJECT
 public:
     typedef QList<ASTNode *>::iterator iterator;
-    ASTNodeList();
+    ASTNodeList(int type, const QString &name);
     virtual ~ASTNodeList();
     bool isEmpty() const;
     void append(ASTNode *node);
     void append(const ASTNodeList &nodeList);
     iterator begin() const;
     iterator end() const;
+    QList<ASTNode *> &nodeList();
 private:
     ASTNodeList(const ASTNodeList &);
     ASTNodeList& operator=(const ASTNodeList &);
@@ -75,12 +103,20 @@ private:
     Private *d;
 };
 
-class ASTInclude: public ASTNode
+class ASTTokens: public ASTNodeList
 {
+    Q_OBJECT
 public:
-    ASTInclude(ASTNodeList *list);
+    ASTTokens();
+    ~ASTTokens();
+};
+
+class ASTInclude: public ASTNodeList
+{
+    Q_OBJECT
+public:
+    ASTInclude();
     ~ASTInclude();
-    ASTNodeList *nodeList() const;
 private:
     class Private;
     Private *d;
@@ -88,6 +124,7 @@ private:
 
 class ASTDefine: public ASTNode
 {
+    Q_OBJECT
 public:
     ASTDefine(ASTToken *id, ASTNodeList *args, ASTNodeList *body);
     ~ASTDefine();
@@ -103,6 +140,7 @@ private:
 
 class ASTUndef: public ASTNode
 {
+    Q_OBJECT
 public:
     ASTUndef(ASTToken *id);
     ~ASTUndef();
@@ -112,48 +150,99 @@ private:
     Private *d;
 };
 
-class ASTLine: public ASTNode
+class ASTLine: public ASTNodeList
 {
+    Q_OBJECT
 public:
-    ASTLine(ASTNodeList *list);
+    ASTLine();
     ~ASTLine();
-    ASTNodeList *nodeList() const;
-private:
-    class Private;
-    Private *d;
 };
 
-class ASTError: public ASTNode
+class ASTError: public ASTNodeList
 {
+    Q_OBJECT
 public:
-    ASTError(ASTNodeList *list);
+    ASTError();
     ~ASTError();
-    ASTNodeList *nodeList() const;
-private:
-    class Private;
-    Private *d;
 };
 
-class ASTPragma: public ASTNode
+class ASTPragma: public ASTNodeList
 {
+    Q_OBJECT
 public:
-    ASTPragma(ASTNodeList *list);
+    ASTPragma();
     ~ASTPragma();
-    ASTNodeList *nodeList() const;
+};
+
+class ASTConstantExpr: public ASTNodeList
+{
+    Q_OBJECT
+public:
+    ASTConstantExpr();
+    ~ASTConstantExpr();
+};
+
+class ASTGroup;
+class ASTElifElement: public ASTNode
+{
+    Q_OBJECT
+public:
+    ASTElifElement(ASTGroup *group, ASTConstantExpr *expr);
+    ~ASTElifElement();
+    ASTGroup *group() const;
+    ASTConstantExpr *expr() const;
 private:
     class Private;
     Private *d;
 };
 
-class ASTConstantExpr: public ASTNode
+class ASTElifGroup: public ASTNodeList
 {
+    Q_OBJECT
 public:
-    ASTConstantExpr(ASTNodeList *list);
-    ~ASTConstantExpr();
-    ASTNodeList *nodeList() const;
+    ASTElifGroup();
+    ~ASTElifGroup();
+};
+
+class ASTIfGroup: public ASTNode
+{
+    Q_OBJECT
+public:
+    ASTIfGroup();
+    ~ASTIfGroup();
+    void setExpr(ASTConstantExpr *expr);
+    void setTrueBranch(ASTGroup *group);
+    void setFalseBranch(ASTGroup *group);
+    ASTConstantExpr *expr() const;
+    ASTGroup *trueBranch() const;
+    ASTGroup *falseBranch() const;
 private:
     class Private;
     Private *d;
+};
+
+class ASTGroup: public ASTNodeList
+{
+    Q_OBJECT
+public:
+    ASTGroup();
+    ~ASTGroup();
+};
+
+class ASTNonDirective: public ASTNodeList
+{
+    Q_OBJECT
+public:
+    ASTNonDirective();
+    ~ASTNonDirective();
+};
+
+class ASTTextLine: public ASTNodeList
+{
+    Q_OBJECT
+public:
+    ASTTextLine();
+    ~ASTTextLine();
 };
 
 }
