@@ -81,6 +81,11 @@ class ASTToken : public ASTNode
 public:
     ASTToken(int t, const QString &name);
     virtual ~ASTToken();
+    bool isOp() const;
+    bool isID() const;
+    bool isPPNumber() const;
+    bool isCharConstant() const;
+    bool isStringLiteral() const;
 };
 
 class ASTNodeList: public ASTNode
@@ -243,6 +248,20 @@ class ASTTextLine: public ASTNodeList
 public:
     ASTTextLine();
     ~ASTTextLine();
+};
+
+class ASTCondExpr: public ASTNode
+{
+    Q_OBJECT
+public:
+    ASTCondExpr();
+};
+
+class ASTLogicalOrExpr: public ASTNode
+{
+    Q_OBJECT
+public:
+    ASTLogicalOrExpr();
 };
 
 }

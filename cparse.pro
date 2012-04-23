@@ -26,7 +26,8 @@ SOURCES += main.cpp \
     ppcontext.cpp \
     ppastvisitor.cpp \
     ppdumpvisitor.cpp \
-    ppevalvisitor.cpp
+    ppevalvisitor.cpp \
+    ppastexpr.cpp
 
 HEADERS += \
     ppast.h \
@@ -34,6 +35,7 @@ HEADERS += \
     ppcontext.h \
     ppastvisitor.h \
     ppdumpvisitor.h \
-    ppevalvisitor.h
+    ppevalvisitor.h \
+    ppastexpr.h
 
 

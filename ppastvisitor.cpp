@@ -6,6 +6,7 @@ namespace PP {
 class ASTVisitor::Private
 {
 public:
+    Private() {context=NULL;}
     Context *context;
 };
 

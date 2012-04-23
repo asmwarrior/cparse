@@ -427,6 +427,31 @@ ASTToken::~ASTToken()
 {
 }
 
+bool ASTToken::isOp() const
+{
+    return !isID() && !isPPNumber() & !isCharConstant() && !isStringLiteral();
+}
+
+bool ASTToken::isID() const
+{
+    return type() == ID;
+}
+
+bool ASTToken::isPPNumber() const
+{
+    return type() == PP_NUMBER;
+}
+
+bool ASTToken::isCharConstant() const
+{
+    return type() == CHAR_CONSTANT;
+}
+
+bool ASTToken::isStringLiteral() const
+{
+    return type() == STRING_LITERAL;
+}
+
 ASTConstantExpr::ASTConstantExpr()
     : ASTNodeList(CONSTANT_EXPR, "ConstantExpression")
 {
