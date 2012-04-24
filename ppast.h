@@ -74,7 +74,8 @@ public:
         NonDirective,
         Group,
         ElifElem,
-        ElifGroup
+        ElifGroup,
+        Constant
     };
     ASTNode(Type t, const QString &name);
     virtual ~ASTNode();

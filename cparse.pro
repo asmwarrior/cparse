@@ -27,7 +27,9 @@ SOURCES += main.cpp \
     ppastvisitor.cpp \
     ppdumpvisitor.cpp \
     ppevalvisitor.cpp \
-    ppastexpr.cpp
+    ppastexpr.cpp \
+    ppastconstant.cpp \
+    escapeseq.cpp
 
 HEADERS += \
     ppast.h \
@@ -36,6 +38,8 @@ HEADERS += \
     ppastvisitor.h \
     ppdumpvisitor.h \
     ppevalvisitor.h \
-    ppastexpr.h
+    ppastexpr.h \
+    ppastconstant.h \
+    escapeseq.h
 
 
