@@ -1,8 +1,9 @@
 %{
 #include "ppast.h"
+using namespace PP;
 #ifndef YYSTYPE_IS_DECLARED
 #define YYSTYPE_IS_DECLARED
-typedef PP::ASTNode *YYSTYPE;
+typedef ASTNode *YYSTYPE;
 #endif
 #include "pp_yacc.h"
 %}
@@ -59,38 +60,38 @@ else                {return ELSE;}
 endif               {return ENDIF;}
 include             {return INCLUDE;}
 define              {BEGIN(SDEFINE);return DEFINE;}
-defined             {pplval = PP::AST::CreateOp(yytext); return DEFINED;}
+defined             {pplval = CreateOp(yytext); return DEFINED;}
 undef               {return UNDEF;}
 line                {return LINE;}
 error               {return ERROR;}
 pragma              {return PRAGMA;}
 
-{id}                {pplval = PP::AST::CreateID(yytext); return ID;}
-{pp_number}         {pplval = PP::AST::CreatePPNumber(yytext); return PP_NUMBER;}
+{id}                {pplval = CreateID(yytext); return ID;}
+{pp_number}         {pplval = CreatePPNumber(yytext); return PP_NUMBER;}
 {char_constant}     {
-    pplval = PP::AST::CreateCharConstant(yytext);
+    pplval = CreateCharConstant(yytext);
     return CHAR_CONSTANT;
                     }
 {string_literal}    {
-    pplval = PP::AST::CreateStringLiteral(yytext);
+    pplval = CreateStringLiteral(yytext);
     return STRING_LITERAL;
                     }
 <SDEFINE>{id}\(     {
     QString str(yytext);
     str.chop(1);
-    pplval = PP::AST::CreateID(str);
+    pplval = CreateID(str);
     BEGIN(0);
     return ID_FUNC;
 }
 {newline}           {BEGIN(XLINESTART);return NEWLINE;}
 {ws}
 {punct} {
-    pplval = PP::AST::CreateOp(yytext);
-    return static_cast<PP::ASTToken*>(pplval)->tokenType();
+    pplval = CreateOp(yytext);
+    return static_cast<ASTToken*>(pplval)->tokenType();
 }
 .   {
-    pplval = PP::AST::CreateOp(yytext[0]);
-    return static_cast<PP::ASTToken*>(pplval)->tokenType();
+    pplval = CreateOp(yytext[0]);
+    return static_cast<ASTToken*>(pplval)->tokenType();
 }
 
 %%

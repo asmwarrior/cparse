@@ -17,48 +17,42 @@ class ASTNodeList;
 class ASTToken;
 class ASTTokens;
 class ASTTextLine;
-class AST
-{
-public:
-    static ASTNode *CreateGroup(ASTNode *groupPart);
-    static ASTNode *CreateIfExpr(ASTConstantExpr *expr);
-    static ASTNode *CreateIfdefExpr(ASTToken *id);
-    static ASTNode *CreateIfndefExpr(ASTToken *id);
-    static ASTNode *CreateIfGroup(ASTConstantExpr *expr, ASTGroup *trueBranch,
-                                  ASTGroup *falseBranch);
-    static ASTNode *CreateIfGroup(ASTConstantExpr *expr, ASTElifGroup *elifGroup,
-                                  ASTGroup *groupAfterElif, ASTGroup *elseBranch);
-    static ASTNode *CreateElifGroup(ASTElifGroup *elifGroup, ASTGroup *group,
-                                    ASTConstantExpr *expr);
-    static ASTNode *CreateElifGroup(ASTGroup *group, ASTConstantExpr *expr);
-    static ASTNode *CreateOp(const QString &str);
-    static ASTNode *CreateOp(char ch);
-    static ASTNode *CreateID(const QString &str);
-    static ASTNode *CreatePPNumber(const QString &str);
-    static ASTNode *CreateCharConstant(const QString &str);
-    static ASTNode *CreateStringLiteral(const QString &str);
-    static ASTNode *CreateTokens(ASTToken* token);
-    static ASTNode *CreateTokens();
-    static ASTNode *CreateInclude(ASTTokens *tokens);
-    static ASTNode *CreateDefine(ASTToken *id, ASTTokens *args,
-                                 ASTTokens *body);
-    static ASTNode *CreateDefineVarArgs(ASTToken *id, ASTTokens *args,
-                                 ASTTokens *body);
-    static ASTNode *CreateUndef(ASTToken *id);
-    static ASTNode *CreateLine(ASTTokens *tokens);
-    static ASTNode *CreateError();
-    static ASTNode *CreateError(ASTTokens *tokens);
-    static ASTNode *CreatePragma();
-    static ASTNode *CreatePragma(ASTTokens *tokens);
-    static ASTNode *CreateNonDirective();
-    static ASTNode *CreateNonDirective(ASTTokens *tokens);
-    static ASTNode *CreateTextLine();
-    static ASTNode *CreateTextLine(ASTTokens *tokens);
-    static ASTNode *CreateConstantExpr(ASTTokens *tokens);
-private:
-    AST();
-    AST(const AST &);
-};
+
+ASTNode *CreateGroup(ASTNode *groupPart);
+ASTNode *CreateIfExpr(ASTConstantExpr *expr);
+ASTNode *CreateIfdefExpr(ASTToken *id);
+ASTNode *CreateIfndefExpr(ASTToken *id);
+ASTNode *CreateIfGroup(ASTConstantExpr *expr, ASTGroup *trueBranch,
+                       ASTGroup *falseBranch);
+ASTNode *CreateIfGroup(ASTConstantExpr *expr, ASTElifGroup *elifGroup,
+                       ASTGroup *groupAfterElif, ASTGroup *elseBranch);
+ASTNode *CreateElifGroup(ASTElifGroup *elifGroup, ASTGroup *group,
+                         ASTConstantExpr *expr);
+ASTNode *CreateElifGroup(ASTGroup *group, ASTConstantExpr *expr);
+ASTNode *CreateOp(const QString &str);
+ASTNode *CreateOp(char ch);
+ASTNode *CreateID(const QString &str);
+ASTNode *CreatePPNumber(const QString &str);
+ASTNode *CreateCharConstant(const QString &str);
+ASTNode *CreateStringLiteral(const QString &str);
+ASTNode *CreateTokens(ASTToken* token);
+ASTNode *CreateTokens();
+ASTNode *CreateInclude(ASTTokens *tokens);
+ASTNode *CreateDefine(ASTToken *id, ASTTokens *args,
+                      ASTTokens *body);
+ASTNode *CreateDefineVarArgs(ASTToken *id, ASTTokens *args,
+                      ASTTokens *body);
+ASTNode *CreateUndef(ASTToken *id);
+ASTNode *CreateLine(ASTTokens *tokens);
+ASTNode *CreateError();
+ASTNode *CreateError(ASTTokens *tokens);
+ASTNode *CreatePragma();
+ASTNode *CreatePragma(ASTTokens *tokens);
+ASTNode *CreateNonDirective();
+ASTNode *CreateNonDirective(ASTTokens *tokens);
+ASTNode *CreateTextLine();
+ASTNode *CreateTextLine(ASTTokens *tokens);
+ASTNode *CreateConstantExpr(ASTTokens *tokens);
 
 class ASTVisitor;
 class ASTNode: public QObject

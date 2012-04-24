@@ -18,7 +18,11 @@ public:
         TernaryExpr
     };
     ASTExpr(ExprType et);
+    ~ASTExpr();
     ExprType exprType() const;
+private:
+    class Private;
+    Private *d;
 };
 
 class ASTPrimaryExpr: public ASTExpr
@@ -30,6 +34,12 @@ public:
         Constant,
         StringLiteral
     };
+    ASTPrimaryExpr();
+    ~ASTPrimaryExpr();
+    PrimaryType primaryType() const;
+private:
+    class Private;
+    Private *d;
 };
 
 class ASTUnaryExpr: public ASTExpr
@@ -48,8 +58,12 @@ public:
         FuncInvoke
     };
     ASTUnaryExpr(UnaryOp op, ASTExpr *expr);
+    ~ASTUnaryExpr();
     UnaryOp op() const;
     ASTExpr *expr() const;
+private:
+    class Private;
+    Private *d;
 };
 
 class ASTBinaryExpr: public ASTExpr
@@ -77,9 +91,13 @@ public:
         HashHash
     };
     ASTBinaryExpr(BinaryOp op, ASTExpr *le, ASTExpr *re);
+    ~ASTBinaryExpr();
     BinaryOp op() const;
     ASTExpr *leftExpr() const;
     ASTExpr *rightExpr() const;
+private:
+    class Private;
+    Private *d;
 };
 
 class ASTTernaryExpr: public ASTExpr
@@ -90,10 +108,14 @@ public:
         Conditional
     };
     ASTTernaryExpr(TernaryOp op, ASTExpr *e1, ASTExpr *e2, ASTExpr *e3);
+    ~ASTTernaryExpr();
     TernaryOp op() const;
     ASTExpr *firstExpr() const;
     ASTExpr *secondExpr() const;
     ASTExpr *thirdExpr() const;
+private:
+    class Private;
+    Private *d;
 };
 
 }

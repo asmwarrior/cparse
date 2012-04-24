@@ -54,7 +54,7 @@ void ASTNode::accept(ASTVisitor *visitor)
                                         Q_ARG(ASTNode *, this));
 }
 
-ASTNode *AST::CreateOp(const QString &str)
+ASTNode *CreateOp(const QString &str)
 {
     static bool mapInit = false;
     static QMap<QString, int> opMap;
@@ -122,46 +122,46 @@ ASTNode *AST::CreateOp(const QString &str)
     return new ASTToken(opMap.value(str), str);
 }
 
-ASTNode *AST::CreateOp(char ch)
+ASTNode *CreateOp(char ch)
 {
     char str[10];
     sprintf(str, "%c", ch);
     return CreateOp(str);
 }
 
-ASTNode *AST::CreateID(const QString &str)
+ASTNode *CreateID(const QString &str)
 {
     return new ASTToken(ID, str);
 }
 
-ASTNode *AST::CreatePPNumber(const QString &str)
+ASTNode *CreatePPNumber(const QString &str)
 {
     return new ASTToken(PP_NUMBER, str);
 }
 
-ASTNode *AST::CreateCharConstant(const QString &str)
+ASTNode *CreateCharConstant(const QString &str)
 {
     return new ASTToken(CHAR_CONSTANT, str);
 }
 
-ASTNode *AST::CreateStringLiteral(const QString &str)
+ASTNode *CreateStringLiteral(const QString &str)
 {
     return new ASTToken(STRING_LITERAL, str);
 }
 
-ASTNode *AST::CreateTokens(ASTToken *token)
+ASTNode *CreateTokens(ASTToken *token)
 {
     ASTTokens *tokens = new ASTTokens;
     tokens->append(token);
     return tokens;
 }
 
-ASTNode *AST::CreateTokens()
+ASTNode *CreateTokens()
 {
     return new ASTTokens();
 }
 
-ASTNode *AST::CreateInclude(ASTTokens *tokens)
+ASTNode *CreateInclude(ASTTokens *tokens)
 {
     ASTInclude *inc;
     inc = new ASTInclude();
@@ -170,13 +170,13 @@ ASTNode *AST::CreateInclude(ASTTokens *tokens)
     return inc;
 }
 
-ASTNode *AST::CreateDefine(ASTToken *id, ASTTokens *args,
+ASTNode *CreateDefine(ASTToken *id, ASTTokens *args,
                            ASTTokens *body)
 {
     return new ASTDefine(id, args, body);
 }
 
-ASTNode *AST::CreateDefineVarArgs(ASTToken *id, ASTTokens *args,
+ASTNode *CreateDefineVarArgs(ASTToken *id, ASTTokens *args,
                            ASTTokens *body)
 {
     ASTDefine *def = new ASTDefine(id, args, body);
@@ -184,12 +184,12 @@ ASTNode *AST::CreateDefineVarArgs(ASTToken *id, ASTTokens *args,
     return def;
 }
 
-ASTNode *AST::CreateUndef(ASTToken *id)
+ASTNode *CreateUndef(ASTToken *id)
 {
     return new ASTUndef(id);
 }
 
-ASTNode *AST::CreateLine(ASTTokens *tokens)
+ASTNode *CreateLine(ASTTokens *tokens)
 {
     ASTLine *line = new ASTLine();
     line->append(*tokens);
@@ -197,13 +197,13 @@ ASTNode *AST::CreateLine(ASTTokens *tokens)
     return line;
 }
 
-ASTNode *AST::CreateError()
+ASTNode *CreateError()
 {
     ASTError *err = new ASTError();
     return err;
 }
 
-ASTNode *AST::CreateError(ASTTokens *tokens)
+ASTNode *CreateError(ASTTokens *tokens)
 {
     ASTError *err = new ASTError();
     err->append(*tokens);
@@ -211,12 +211,12 @@ ASTNode *AST::CreateError(ASTTokens *tokens)
     return err;
 }
 
-ASTNode *AST::CreatePragma()
+ASTNode *CreatePragma()
 {
     return new ASTPragma();
 }
 
-ASTNode *AST::CreatePragma(ASTTokens *tokens)
+ASTNode *CreatePragma(ASTTokens *tokens)
 {
     ASTPragma *pragma = new ASTPragma();
     pragma->append(*tokens);
@@ -224,12 +224,12 @@ ASTNode *AST::CreatePragma(ASTTokens *tokens)
     return pragma;
 }
 
-ASTNode *AST::CreateNonDirective()
+ASTNode *CreateNonDirective()
 {
     return new ASTNonDirective();
 }
 
-ASTNode *AST::CreateNonDirective(ASTTokens *tokens)
+ASTNode *CreateNonDirective(ASTTokens *tokens)
 {
     ASTNonDirective *nond = new ASTNonDirective();
     nond->append(*tokens);
@@ -237,12 +237,12 @@ ASTNode *AST::CreateNonDirective(ASTTokens *tokens)
     return nond;
 }
 
-ASTNode *AST::CreateTextLine()
+ASTNode *CreateTextLine()
 {
     return new ASTTextLine();
 }
 
-ASTNode *AST::CreateTextLine(ASTTokens *tokens)
+ASTNode *CreateTextLine(ASTTokens *tokens)
 {
     ASTTextLine *tl;
     tl = new ASTTextLine();
@@ -251,7 +251,7 @@ ASTNode *AST::CreateTextLine(ASTTokens *tokens)
     return tl;
 }
 
-ASTNode *AST::CreateConstantExpr(ASTTokens *tokens)
+ASTNode *CreateConstantExpr(ASTTokens *tokens)
 {
     ASTConstantExpr *constExpr = new ASTConstantExpr();
     constExpr->append(*tokens);
@@ -589,19 +589,19 @@ ASTNonDirective::~ASTNonDirective()
 {
 }
 
-ASTNode *AST::CreateGroup(ASTNode *groupPart)
+ASTNode *CreateGroup(ASTNode *groupPart)
 {
     ASTGroup *group = new ASTGroup();
     group->append(groupPart);
     return group;
 }
 
-ASTNode *AST::CreateIfExpr(ASTConstantExpr *expr)
+ASTNode *CreateIfExpr(ASTConstantExpr *expr)
 {
     return expr;
 }
 
-ASTNode *AST::CreateIfdefExpr(ASTToken *id)
+ASTNode *CreateIfdefExpr(ASTToken *id)
 {
     ASTConstantExpr *expr = new ASTConstantExpr();
     expr->append(CreateOp("defined"));
@@ -611,7 +611,7 @@ ASTNode *AST::CreateIfdefExpr(ASTToken *id)
     return expr;
 }
 
-ASTNode *AST::CreateIfndefExpr(ASTToken *id)
+ASTNode *CreateIfndefExpr(ASTToken *id)
 {
     ASTConstantExpr *expr = new ASTConstantExpr();
     expr->append(CreateOp('!'));
@@ -622,12 +622,12 @@ ASTNode *AST::CreateIfndefExpr(ASTToken *id)
     return expr;
 }
 
-ASTNode *AST::CreateIfGroup(ASTConstantExpr *expr, ASTGroup *trueBranch, ASTGroup *falseBranch)
+ASTNode *CreateIfGroup(ASTConstantExpr *expr, ASTGroup *trueBranch, ASTGroup *falseBranch)
 {
     return CreateIfGroup(expr, NULL, trueBranch, falseBranch);
 }
 
-ASTNode *AST::CreateIfGroup(ASTConstantExpr *expr, ASTElifGroup *elifGroup, ASTGroup *groupAfterElif, ASTGroup *elseBranch)
+ASTNode *CreateIfGroup(ASTConstantExpr *expr, ASTElifGroup *elifGroup, ASTGroup *groupAfterElif, ASTGroup *elseBranch)
 {
     ASTIfGroup *ifGroup, *aif, *bif;
     ASTElifElement *elem;
@@ -651,13 +651,13 @@ ASTNode *AST::CreateIfGroup(ASTConstantExpr *expr, ASTElifGroup *elifGroup, ASTG
     return ifGroup;
 }
 
-ASTNode *AST::CreateElifGroup(ASTElifGroup *elifGroup, ASTGroup *group, ASTConstantExpr *expr)
+ASTNode *CreateElifGroup(ASTElifGroup *elifGroup, ASTGroup *group, ASTConstantExpr *expr)
 {
     elifGroup->append(new ASTElifElement(group, expr));
     return elifGroup;
 }
 
-ASTNode *AST::CreateElifGroup(ASTGroup *group, ASTConstantExpr *expr)
+ASTNode *CreateElifGroup(ASTGroup *group, ASTConstantExpr *expr)
 {
     ASTElifGroup *elifGroup = new ASTElifGroup;
     ASTElifElement *elifElem = new ASTElifElement(group, expr);
