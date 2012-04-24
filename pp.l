@@ -6,6 +6,7 @@ using namespace PP;
 typedef ASTNode *YYSTYPE;
 #endif
 #include "pp_yacc.h"
+
 %}
 %option noyywrap nodefault yylineno
 %option header-file="pp_lex.h"
@@ -49,8 +50,9 @@ ws                  [ \t]
 newline             \n
 
 %%
-    BEGIN(XLINESTART);
+^.                  {yyless(0);BEGIN(XLINESTART);}
 <XLINESTART>#       {BEGIN(0);return LINESTART_HASH;}
+<XLINESTART>{ws}    
 <XLINESTART>.|\n    {yyless(0);BEGIN(0);}
 if                  {return IF;}
 ifdef               {return IFDEF;}
@@ -83,7 +85,7 @@ pragma              {return PRAGMA;}
     BEGIN(0);
     return ID_FUNC;
 }
-{newline}           {BEGIN(XLINESTART);return NEWLINE;}
+{newline}           {return NEWLINE;}
 {ws}
 {punct} {
     pplval = CreateOp(yytext);
