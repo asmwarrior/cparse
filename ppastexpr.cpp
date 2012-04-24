@@ -4,7 +4,7 @@
 namespace PP {
 
 ASTExpr::ASTExpr(ExprType et)
-    : ASTNode(EXPR, "Expression")
+    : ASTNode(ASTNode::Expr, "Expression")
 {
 }
 

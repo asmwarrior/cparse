@@ -78,6 +78,7 @@ void pperror(ASTNode **proot, const char *);
 %token AND_ASSIGN       "&="
 %token XOR_ASSIGN       "^="
 %token OR_ASSIGN        "|="
+%token LINESTART_HASH   "^#"
 %token HASH_HASH        "##"
 
 %token IFDEF
@@ -124,7 +125,7 @@ group   :group_part {$$ = AST::CreateGroup($1);}
 group_part  :if_group {$$ = $1;}
             |control_line {$$ = $1;}
             |text_line {$$ = $1;}
-            |'#' non_directive {$$ = AST::CreateNonDirective(static_cast<ASTTokens*>($2));}
+            |"^#" non_directive {$$ = AST::CreateNonDirective(static_cast<ASTTokens*>($2));}
             ;
 if_group    : ifs_line group endif_line 
 {
@@ -215,81 +216,81 @@ elif_group  : group elif_line   {
             static_cast<ASTConstantExpr*>($2));
 }
             ;
-ifs_line    : '#' IF constant_expr NEWLINE
+ifs_line    : "^#" IF constant_expr NEWLINE
 {
     $$ = AST::CreateIfExpr(static_cast<ASTConstantExpr*>($3));
 }
-            | '#' IFDEF ID NEWLINE
+            | "^#" IFDEF ID NEWLINE
 {
     $$ = AST::CreateIfdefExpr(static_cast<ASTToken*>($3));
 }
-            | '#' IFNDEF ID NEWLINE
+            | "^#" IFNDEF ID NEWLINE
 {
     $$ = AST::CreateIfndefExpr(static_cast<ASTToken*>($3));
 }
             ;
-elif_line   : '#' ELIF constant_expr NEWLINE    {$$=$3;}
+elif_line   : "^#" ELIF constant_expr NEWLINE    {$$=$3;}
             ;
-else_line   : '#' ELSE NEWLINE
+else_line   : "^#" ELSE NEWLINE
             ;
-endif_line  : '#' ENDIF NEWLINE
+endif_line  : "^#" ENDIF NEWLINE
             ;
-control_line: '#' INCLUDE pp_tokens NEWLINE
+control_line: "^#" INCLUDE pp_tokens NEWLINE
 {
     $$ = AST::CreateInclude(static_cast<ASTTokens*>($3));
 }
-            | '#' DEFINE ID NEWLINE                   
+            | "^#" DEFINE ID NEWLINE
 {
     $$ = AST::CreateDefine(static_cast<ASTToken*>($3),
                                NULL,
                                NULL);
 }
-            | '#' DEFINE ID replacement_list NEWLINE
+            | "^#" DEFINE ID replacement_list NEWLINE
 {
     $$ = AST::CreateDefine(static_cast<ASTToken*>($3),
                                NULL,
                                static_cast<ASTTokens*>($4));
 }
-            | '#' DEFINE ID_FUNC  id_list ')' replacement_list NEWLINE
+            | "^#" DEFINE ID_FUNC  id_list ')' replacement_list NEWLINE
 {
     $$ = AST::CreateDefine(static_cast<ASTToken*>($3),
                                static_cast<ASTTokens*>($4),
                                static_cast<ASTTokens*>($6));
 }
-            | '#' DEFINE ID_FUNC ')' replacement_list NEWLINE
+            | "^#" DEFINE ID_FUNC ')' replacement_list NEWLINE
 {
     $$ = AST::CreateDefine(static_cast<ASTToken*>($3),
                                static_cast<ASTTokens*>(AST::CreateTokens()),
                                static_cast<ASTTokens*>($5));
 }
-            | '#' DEFINE ID_FUNC "..." ')' replacement_list NEWLINE
+            | "^#" DEFINE ID_FUNC "..." ')' replacement_list NEWLINE
 {
     $$ = AST::CreateDefineVarArgs(static_cast<ASTToken*>($3),
                                       static_cast<ASTTokens*>(AST::CreateTokens()),
                                       static_cast<ASTTokens*>($6));
 }
-            | '#' DEFINE ID_FUNC id_list ',' "..." ')' replacement_list NEWLINE
+            | "^#" DEFINE ID_FUNC id_list ',' "..." ')' replacement_list NEWLINE
 {
     $$ = AST::CreateDefineVarArgs(static_cast<ASTToken*>($3),
                                       static_cast<ASTTokens*>($4),
                                       static_cast<ASTTokens*>($8));
 }
-            | '#' UNDEF ID NEWLINE  {
+            | "^#" UNDEF ID NEWLINE  {
                 $$=AST::CreateUndef(static_cast<ASTToken*>($3));
                                     }
-            | '#' LINE pp_tokens NEWLINE    {
+            | "^#" LINE pp_tokens NEWLINE    {
                 $$=AST::CreateLine(static_cast<ASTTokens*>($3));
                                             }
-            | '#' ERROR NEWLINE     {$$=AST::CreateTokens();}
-            | '#' ERROR pp_tokens NEWLINE   {
+            | "^#" ERROR NEWLINE     {$$=AST::CreateTokens();}
+            | "^#" ERROR pp_tokens NEWLINE   {
                 $$=AST::CreateError(static_cast<ASTTokens*>($3));
                                             }
-            | '#' PRAGMA NEWLINE    {$$=AST::CreatePragma();}
-            | '#' PRAGMA pp_tokens NEWLINE
+            | "^#" PRAGMA NEWLINE    {$$=AST::CreatePragma();}
+            | "^#" PRAGMA pp_tokens NEWLINE
 {
     $$=AST::CreatePragma(static_cast<ASTTokens *>($3));
 }
-            | '#' NEWLINE           {$$=AST::CreateNonDirective();}
+            | "^#" NEWLINE           {$$=AST::CreateNonDirective();}
             ;
 text_line   : NEWLINE               {$$=AST::CreateTextLine();}
             | pp_tokens NEWLINE
@@ -320,6 +321,7 @@ pp_token    : ID                {$$=$1;}
             | CHAR_CONSTANT     {$$=$1;}
             | STRING_LITERAL    {$$=$1;}
             | DEFINED           {$$=$1;}
+            | '#'               {$$=$1;}
             | '['               {$$=$1;}
             | ']'               {$$=$1;}
             | '('               {$$=$1;}
@@ -373,5 +375,6 @@ pp_token    : ID                {$$=$1;}
 
 void pperror(ASTNode **proot, const char *str)
 {
+    (void)proot;
     fprintf(stderr, "%d:%s\n", pplineno, str);
 }

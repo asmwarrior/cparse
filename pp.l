@@ -10,6 +10,7 @@ typedef PP::ASTNode *YYSTYPE;
 %option header-file="pp_lex.h"
 
 %s SDEFINE
+%x XLINESTART
 
 digit       [0-9]
 nondigit    [_a-zA-Z]
@@ -47,6 +48,9 @@ ws                  [ \t]
 newline             \n
 
 %%
+    BEGIN(XLINESTART);
+<XLINESTART>#       {BEGIN(0);return LINESTART_HASH;}
+<XLINESTART>.|\n    {yyless(0);BEGIN(0);}
 if                  {return IF;}
 ifdef               {return IFDEF;}
 ifndef              {return IFNDEF;}
@@ -78,9 +82,15 @@ pragma              {return PRAGMA;}
     BEGIN(0);
     return ID_FUNC;
 }
-{newline}           {return NEWLINE;}
+{newline}           {BEGIN(XLINESTART);return NEWLINE;}
 {ws}
-{punct}             {pplval = PP::AST::CreateOp(yytext); return pplval->type();}
-.                   {pplval = PP::AST::CreateOp(yytext[0]); return pplval->type();}
+{punct} {
+    pplval = PP::AST::CreateOp(yytext);
+    return static_cast<PP::ASTToken*>(pplval)->tokenType();
+}
+.   {
+    pplval = PP::AST::CreateOp(yytext[0]);
+    return static_cast<PP::ASTToken*>(pplval)->tokenType();
+}
 
 %%

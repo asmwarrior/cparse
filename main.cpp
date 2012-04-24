@@ -8,7 +8,7 @@
 extern int ppdebug;
 int main(int argc, char *argv[])
 {
-    ppdebug = 0;
+    ppdebug = 1;
     QCoreApplication a(argc, argv);
     FILE *f;
     PP::Context ctx;

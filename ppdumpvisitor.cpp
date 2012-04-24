@@ -28,6 +28,7 @@ void DumpVisitor::visitTextLine(ASTNode *node)
 
         (*iter)->accept(this);
     }
+    printf("\n");
 }
 
 void DumpVisitor::visitNonDirective(ASTNode *node)
@@ -39,6 +40,7 @@ void DumpVisitor::visitNonDirective(ASTNode *node)
 
         (*iter)->accept(this);
     }
+    printf("\n");
 }
 
 void DumpVisitor::visitPragma(ASTNode *node)

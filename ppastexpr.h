@@ -1,6 +1,9 @@
 #ifndef PPASTEXPR_H
 #define PPASTEXPR_H
 
+#include "ppast.h"
+#include <QObject>
+
 namespace PP {
 class ASTNode;
 
@@ -41,6 +44,7 @@ public:
         LogicalNot,
         SizeOf,
         Defined,
+        Hash,
         FuncInvoke
     };
     ASTUnaryExpr(UnaryOp op, ASTExpr *expr);
@@ -69,7 +73,8 @@ public:
         AriMult,
         AriDiv,
         AriMod,
-        Comma
+        Comma,
+        HashHash
     };
     ASTBinaryExpr(BinaryOp op, ASTExpr *le, ASTExpr *re);
     BinaryOp op() const;

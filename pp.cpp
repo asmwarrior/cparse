@@ -1,7 +1,7 @@
 #include "pp.h"
 #include "ppcontext.h"
-#include "pp_lex.h"
 #include "pp_yacc.h"
+#include "pp_lex.h"
 #include <stdio.h>
 
 extern int ppparse(PP::ASTNode **proot);

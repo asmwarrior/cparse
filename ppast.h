@@ -65,9 +65,26 @@ class ASTNode: public QObject
 {
     Q_OBJECT
 public:
-    ASTNode(int t, const QString &name);
+    enum Type {
+        Token,
+        Tokens,
+        Include,
+        Define,
+        Error,
+        Line,
+        Pragma,
+        Expr,
+        Undef,
+        IfGroup,
+        TextLine,
+        NonDirective,
+        Group,
+        ElifElem,
+        ElifGroup
+    };
+    ASTNode(Type t, const QString &name);
     virtual ~ASTNode();
-    int type() const;
+    Type type() const;
     QString spellName() const;
     virtual void accept(ASTVisitor *visitor);
 private:
@@ -81,11 +98,15 @@ class ASTToken : public ASTNode
 public:
     ASTToken(int t, const QString &name);
     virtual ~ASTToken();
+    int tokenType() const;
     bool isOp() const;
     bool isID() const;
     bool isPPNumber() const;
     bool isCharConstant() const;
     bool isStringLiteral() const;
+private:
+    class Private;
+    Private *d;
 };
 
 class ASTNodeList: public ASTNode
@@ -93,7 +114,7 @@ class ASTNodeList: public ASTNode
     Q_OBJECT
 public:
     typedef QList<ASTNode *>::iterator iterator;
-    ASTNodeList(int type, const QString &name);
+    ASTNodeList(ASTNode::Type type, const QString &name);
     virtual ~ASTNodeList();
     bool isEmpty() const;
     void append(ASTNode *node);
@@ -248,20 +269,6 @@ class ASTTextLine: public ASTNodeList
 public:
     ASTTextLine();
     ~ASTTextLine();
-};
-
-class ASTCondExpr: public ASTNode
-{
-    Q_OBJECT
-public:
-    ASTCondExpr();
-};
-
-class ASTLogicalOrExpr: public ASTNode
-{
-    Q_OBJECT
-public:
-    ASTLogicalOrExpr();
 };
 
 }
