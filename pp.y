@@ -125,7 +125,7 @@ group   :group_part {$$ = CreateGroup($1);}
 group_part  :if_group {$$ = $1;}
             |control_line {$$ = $1;}
             |text_line {$$ = $1;}
-            |"^#" non_directive {$$ = CreateNonDirective(static_cast<ASTTokens*>($2));}
+            |"^#" non_directive {$$ = CreateNonDirective(static_cast<ASTPPTokens*>($2));}
             ;
 if_group    : ifs_line group endif_line 
 {
@@ -222,11 +222,11 @@ ifs_line    : "^#" IF constant_expr NEWLINE
 }
             | "^#" IFDEF ID NEWLINE
 {
-    $$ = CreateIfdefExpr(static_cast<ASTToken*>($3));
+    $$ = CreateIfdefExpr(static_cast<ASTPPToken*>($3));
 }
             | "^#" IFNDEF ID NEWLINE
 {
-    $$ = CreateIfndefExpr(static_cast<ASTToken*>($3));
+    $$ = CreateIfndefExpr(static_cast<ASTPPToken*>($3));
 }
             ;
 elif_line   : "^#" ELIF constant_expr NEWLINE    {$$=$3;}
@@ -237,84 +237,84 @@ endif_line  : "^#" ENDIF NEWLINE
             ;
 control_line: "^#" INCLUDE pp_tokens NEWLINE
 {
-    $$ = CreateInclude(static_cast<ASTTokens*>($3));
+    $$ = CreateInclude(static_cast<ASTPPTokens*>($3));
 }
             | "^#" DEFINE ID NEWLINE
 {
-    $$ = CreateDefine(static_cast<ASTToken*>($3),
+    $$ = CreateDefine(static_cast<ASTPPToken*>($3),
                                NULL,
                                NULL);
 }
             | "^#" DEFINE ID replacement_list NEWLINE
 {
-    $$ = CreateDefine(static_cast<ASTToken*>($3),
+    $$ = CreateDefine(static_cast<ASTPPToken*>($3),
                                NULL,
-                               static_cast<ASTTokens*>($4));
+                               static_cast<ASTPPTokens*>($4));
 }
             | "^#" DEFINE ID_FUNC  id_list ')' replacement_list NEWLINE
 {
-    $$ = CreateDefine(static_cast<ASTToken*>($3),
-                               static_cast<ASTTokens*>($4),
-                               static_cast<ASTTokens*>($6));
+    $$ = CreateDefine(static_cast<ASTPPToken*>($3),
+                               static_cast<ASTPPTokens*>($4),
+                               static_cast<ASTPPTokens*>($6));
 }
             | "^#" DEFINE ID_FUNC ')' replacement_list NEWLINE
 {
-    $$ = CreateDefine(static_cast<ASTToken*>($3),
-                               static_cast<ASTTokens*>(CreateTokens()),
-                               static_cast<ASTTokens*>($5));
+    $$ = CreateDefine(static_cast<ASTPPToken*>($3),
+                               static_cast<ASTPPTokens*>(CreatePPTokens()),
+                               static_cast<ASTPPTokens*>($5));
 }
             | "^#" DEFINE ID_FUNC "..." ')' replacement_list NEWLINE
 {
-    $$ = CreateDefineVarArgs(static_cast<ASTToken*>($3),
-                                      static_cast<ASTTokens*>(CreateTokens()),
-                                      static_cast<ASTTokens*>($6));
+    $$ = CreateDefineVarArgs(static_cast<ASTPPToken*>($3),
+                                      static_cast<ASTPPTokens*>(CreatePPTokens()),
+                                      static_cast<ASTPPTokens*>($6));
 }
             | "^#" DEFINE ID_FUNC id_list ',' "..." ')' replacement_list NEWLINE
 {
-    $$ = CreateDefineVarArgs(static_cast<ASTToken*>($3),
-                                      static_cast<ASTTokens*>($4),
-                                      static_cast<ASTTokens*>($8));
+    $$ = CreateDefineVarArgs(static_cast<ASTPPToken*>($3),
+                                      static_cast<ASTPPTokens*>($4),
+                                      static_cast<ASTPPTokens*>($8));
 }
             | "^#" UNDEF ID NEWLINE  {
-                $$=CreateUndef(static_cast<ASTToken*>($3));
+                $$=CreateUndef(static_cast<ASTPPToken*>($3));
                                     }
             | "^#" LINE pp_tokens NEWLINE    {
-                $$=CreateLine(static_cast<ASTTokens*>($3));
+                $$=CreateLine(static_cast<ASTPPTokens*>($3));
                                             }
-            | "^#" ERROR NEWLINE     {$$=CreateTokens();}
+            | "^#" ERROR NEWLINE     {$$=CreatePPTokens();}
             | "^#" ERROR pp_tokens NEWLINE   {
-                $$=CreateError(static_cast<ASTTokens*>($3));
+                $$=CreateError(static_cast<ASTPPTokens*>($3));
                                             }
             | "^#" PRAGMA NEWLINE    {$$=CreatePragma();}
             | "^#" PRAGMA pp_tokens NEWLINE
 {
-    $$=CreatePragma(static_cast<ASTTokens *>($3));
+    $$=CreatePragma(static_cast<ASTPPTokens *>($3));
 }
             | "^#" NEWLINE           {$$=CreateNonDirective();}
             ;
 text_line   : NEWLINE               {$$=CreateTextLine();}
             | pp_tokens NEWLINE
 {
-    $$ = CreateTextLine(static_cast<ASTTokens *>($1));
+    $$ = CreateTextLine(static_cast<ASTPPTokens *>($1));
 }
             ;
 non_directive   : pp_tokens NEWLINE
 {
-    $$ = CreateNonDirective(static_cast<ASTTokens *>($1));
+    $$ = CreateNonDirective(static_cast<ASTPPTokens *>($1));
 }
                 ;
-id_list     : ID                {$$=CreateTokens(static_cast<ASTToken *>($1));}
-            | id_list ',' ID    {static_cast<ASTTokens*>($1)->append($3); $$=$1;}
+id_list     : ID                {$$=CreatePPTokens(static_cast<ASTPPToken *>($1));}
+            | id_list ',' ID    {static_cast<ASTPPTokens*>($1)->append($3); $$=$1;}
             ;
 replacement_list: pp_tokens     {$$=$1;}
                 ;
 constant_expr   : pp_tokens
 {
-    $$ = CreateConstantExpr(static_cast<ASTTokens*>($1));
+    $$ = CreateConstantExpr(static_cast<ASTPPTokens*>($1));
 }
                 ;
-pp_tokens   : pp_token          {$$=CreateTokens(static_cast<ASTToken *>($1));}
-            | pp_tokens pp_token{static_cast<ASTTokens*>($1)->append($2); $$=$1;}
+pp_tokens   : pp_token          {$$=CreatePPTokens(static_cast<ASTPPToken *>($1));}
+            | pp_tokens pp_token{static_cast<ASTPPTokens*>($1)->append($2); $$=$1;}
             ;
 pp_token    : ID                {$$=$1;}
             | PP_NUMBER         {$$=$1;}

@@ -87,11 +87,11 @@ pragma              {return PRAGMA;}
 {ws}
 {punct} {
     pplval = CreateOp(yytext);
-    return static_cast<ASTToken*>(pplval)->tokenType();
+    return static_cast<ASTPPToken*>(pplval)->ppTokenType();
 }
 .   {
     pplval = CreateOp(yytext[0]);
-    return static_cast<ASTToken*>(pplval)->tokenType();
+    return static_cast<ASTPPToken*>(pplval)->ppTokenType();
 }
 
 %%

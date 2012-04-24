@@ -86,9 +86,9 @@ void EvalVisitor::visitDefine(ASTNode *node)
     printf("\n");
 }
 
-void EvalVisitor::visitTokens(ASTNode *node)
+void EvalVisitor::visitPPTokens(ASTNode *node)
 {
-    ASTTokens *tokens = static_cast<ASTTokens *>(node);
+    ASTPPTokens *tokens = static_cast<ASTPPTokens *>(node);
     for (ASTNodeList::iterator iter = tokens->begin();
          iter != tokens->end(); iter++) {
 
@@ -96,7 +96,7 @@ void EvalVisitor::visitTokens(ASTNode *node)
     }
 }
 
-void EvalVisitor::visitToken(ASTNode *node)
+void EvalVisitor::visitPPToken(ASTNode *node)
 {
     printf("%s ", node->spellName().toAscii().constData());
 }

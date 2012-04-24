@@ -17,8 +17,8 @@ public slots:
     void visitPragma(ASTNode *node);
     void visitIfGroup(ASTNode *node);
     void visitDefine(ASTNode *node);
-    void visitTokens(ASTNode *node);
-    void visitToken(ASTNode *node);
+    void visitPPTokens(ASTNode *node);
+    void visitPPToken(ASTNode *node);
     void visitConstantExpr(ASTNode *node);
 };
 }

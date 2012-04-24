@@ -89,9 +89,9 @@ void DumpVisitor::visitDefine(ASTNode *node)
     printf("\n");
 }
 
-void DumpVisitor::visitTokens(ASTNode *node)
+void DumpVisitor::visitPPTokens(ASTNode *node)
 {
-    ASTTokens *tokens = static_cast<ASTTokens *>(node);
+    ASTPPTokens *tokens = static_cast<ASTPPTokens *>(node);
     for (ASTNodeList::iterator iter = tokens->begin();
          iter != tokens->end(); iter++) {
 
@@ -99,7 +99,7 @@ void DumpVisitor::visitTokens(ASTNode *node)
     }
 }
 
-void DumpVisitor::visitToken(ASTNode *node)
+void DumpVisitor::visitPPToken(ASTNode *node)
 {
     printf("%s ", node->spellName().toAscii().constData());
 }

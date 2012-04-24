@@ -119,7 +119,7 @@ ASTNode *CreateOp(const QString &str)
         qFatal("Unknown punct: %s", str.toAscii().constData());
         return 0;
     }
-    return new ASTToken(opMap.value(str), str);
+    return new ASTPPToken(opMap.value(str), str);
 }
 
 ASTNode *CreateOp(char ch)
@@ -131,69 +131,69 @@ ASTNode *CreateOp(char ch)
 
 ASTNode *CreateID(const QString &str)
 {
-    return new ASTToken(ID, str);
+    return new ASTPPToken(ID, str);
 }
 
 ASTNode *CreatePPNumber(const QString &str)
 {
-    return new ASTToken(PP_NUMBER, str);
+    return new ASTPPToken(PP_NUMBER, str);
 }
 
 ASTNode *CreateCharConstant(const QString &str)
 {
-    return new ASTToken(CHAR_CONSTANT, str);
+    return new ASTPPToken(CHAR_CONSTANT, str);
 }
 
 ASTNode *CreateStringLiteral(const QString &str)
 {
-    return new ASTToken(STRING_LITERAL, str);
+    return new ASTPPToken(STRING_LITERAL, str);
 }
 
-ASTNode *CreateTokens(ASTToken *token)
+ASTNode *CreatePPTokens(ASTPPToken *PPToken)
 {
-    ASTTokens *tokens = new ASTTokens;
-    tokens->append(token);
-    return tokens;
+    ASTPPTokens *PPTokens = new ASTPPTokens;
+    PPTokens->append(PPToken);
+    return PPTokens;
 }
 
-ASTNode *CreateTokens()
+ASTNode *CreatePPTokens()
 {
-    return new ASTTokens();
+    return new ASTPPTokens();
 }
 
-ASTNode *CreateInclude(ASTTokens *tokens)
+ASTNode *CreateInclude(ASTPPTokens *PPTokens)
 {
     ASTInclude *inc;
     inc = new ASTInclude();
-    inc->append(*tokens);
-    delete tokens;
+    inc->append(*PPTokens);
+    delete PPTokens;
     return inc;
 }
 
-ASTNode *CreateDefine(ASTToken *id, ASTTokens *args,
-                           ASTTokens *body)
+ASTNode *CreateDefine(ASTPPToken *id, ASTPPTokens *args,
+                           ASTPPTokens *body)
 {
     return new ASTDefine(id, args, body);
 }
 
-ASTNode *CreateDefineVarArgs(ASTToken *id, ASTTokens *args,
-                           ASTTokens *body)
+ASTNode *CreateDefineVarArgs(ASTPPToken *id, ASTPPTokens *args,
+                           ASTPPTokens *body)
 {
     ASTDefine *def = new ASTDefine(id, args, body);
     def->setVarArgs(true);
     return def;
 }
 
-ASTNode *CreateUndef(ASTToken *id)
+ASTNode *CreateUndef(ASTPPToken *id)
 {
     return new ASTUndef(id);
 }
 
-ASTNode *CreateLine(ASTTokens *tokens)
+ASTNode *CreateLine(ASTPPTokens *PPTokens)
 {
     ASTLine *line = new ASTLine();
-    line->append(*tokens);
-    delete tokens;
+    line->append(*PPTokens);
+    delete PPTokens;
     return line;
 }
 
@@ -203,11 +203,11 @@ ASTNode *CreateError()
     return err;
 }
 
-ASTNode *CreateError(ASTTokens *tokens)
+ASTNode *CreateError(ASTPPTokens *PPTokens)
 {
     ASTError *err = new ASTError();
-    err->append(*tokens);
-    delete tokens;
+    err->append(*PPTokens);
+    delete PPTokens;
     return err;
 }
 
@@ -216,11 +216,11 @@ ASTNode *CreatePragma()
     return new ASTPragma();
 }
 
-ASTNode *CreatePragma(ASTTokens *tokens)
+ASTNode *CreatePragma(ASTPPTokens *PPTokens)
 {
     ASTPragma *pragma = new ASTPragma();
-    pragma->append(*tokens);
-    delete tokens;
+    pragma->append(*PPTokens);
+    delete PPTokens;
     return pragma;
 }
 
@@ -229,11 +229,11 @@ ASTNode *CreateNonDirective()
     return new ASTNonDirective();
 }
 
-ASTNode *CreateNonDirective(ASTTokens *tokens)
+ASTNode *CreateNonDirective(ASTPPTokens *PPTokens)
 {
     ASTNonDirective *nond = new ASTNonDirective();
-    nond->append(*tokens);
-    delete tokens;
+    nond->append(*PPTokens);
+    delete PPTokens;
     return nond;
 }
 
@@ -242,20 +242,20 @@ ASTNode *CreateTextLine()
     return new ASTTextLine();
 }
 
-ASTNode *CreateTextLine(ASTTokens *tokens)
+ASTNode *CreateTextLine(ASTPPTokens *PPTokens)
 {
     ASTTextLine *tl;
     tl = new ASTTextLine();
-    tl->append(*tokens);
-    delete tokens;
+    tl->append(*PPTokens);
+    delete PPTokens;
     return tl;
 }
 
-ASTNode *CreateConstantExpr(ASTTokens *tokens)
+ASTNode *CreateConstantExpr(ASTPPTokens *PPTokens)
 {
     ASTConstantExpr *constExpr = new ASTConstantExpr();
-    constExpr->append(*tokens);
-    delete tokens;
+    constExpr->append(*PPTokens);
+    delete PPTokens;
     return constExpr;
 }
 
@@ -313,13 +313,13 @@ QList<ASTNode *> &ASTNodeList::nodeList()
 class ASTDefine::Private
 {
 public:
-    ASTToken *id;
+    ASTPPToken *id;
     ASTNodeList *args;
     ASTNodeList *body;
     bool vargs;
 };
 
-ASTDefine::ASTDefine(ASTToken *id, ASTNodeList *args, ASTNodeList *body)
+ASTDefine::ASTDefine(ASTPPToken *id, ASTNodeList *args, ASTNodeList *body)
     : ASTNode(ASTNode::Define, "Define"),
       d(new ASTDefine::Private)
 {
@@ -334,7 +334,7 @@ ASTDefine::~ASTDefine()
     delete d;
 }
 
-ASTToken* ASTDefine::id() const
+ASTPPToken* ASTDefine::id() const
 {
     return d->id;
 }
@@ -398,10 +398,10 @@ ASTPragma::~ASTPragma()
 class ASTUndef::Private
 {
 public:
-    ASTToken *id;
+    ASTPPToken *id;
 };
 
-ASTUndef::ASTUndef(ASTToken *id)
+ASTUndef::ASTUndef(ASTPPToken *id)
     : ASTNode(ASTNode::Undef, "Undef"),
       d(new ASTUndef::Private)
 {
@@ -413,56 +413,56 @@ ASTUndef::~ASTUndef()
     delete d;
 }
 
-ASTToken* ASTUndef::id() const
+ASTPPToken* ASTUndef::id() const
 {
     return d->id;
 }
 
-class ASTToken::Private
+class ASTPPToken::Private
 {
 public:
-    int tokenType;
+    int ppTokenType;
 };
 
-ASTToken::ASTToken(int t, const QString &name)
-    : ASTNode(ASTNode::Token, name),
-      d(new ASTToken::Private)
+ASTPPToken::ASTPPToken(int t, const QString &name)
+    : ASTNode(ASTNode::PPToken, name),
+      d(new ASTPPToken::Private)
 {
-    d->tokenType = t;
+    d->ppTokenType = t;
 }
 
-ASTToken::~ASTToken()
+ASTPPToken::~ASTPPToken()
 {
 }
 
-int ASTToken::tokenType() const
+int ASTPPToken::ppTokenType() const
 {
-    return d->tokenType;
+    return d->ppTokenType;
 }
 
-bool ASTToken::isOp() const
+bool ASTPPToken::isOp() const
 {
     return !isID() && !isPPNumber() & !isCharConstant() && !isStringLiteral();
 }
 
-bool ASTToken::isID() const
+bool ASTPPToken::isID() const
 {
-    return tokenType() == ID;
+    return ppTokenType() == ID;
 }
 
-bool ASTToken::isPPNumber() const
+bool ASTPPToken::isPPNumber() const
 {
-    return tokenType() == PP_NUMBER;
+    return ppTokenType() == PP_NUMBER;
 }
 
-bool ASTToken::isCharConstant() const
+bool ASTPPToken::isCharConstant() const
 {
-    return tokenType() == CHAR_CONSTANT;
+    return ppTokenType() == CHAR_CONSTANT;
 }
 
-bool ASTToken::isStringLiteral() const
+bool ASTPPToken::isStringLiteral() const
 {
-    return tokenType() == STRING_LITERAL;
+    return ppTokenType() == STRING_LITERAL;
 }
 
 ASTConstantExpr::ASTConstantExpr()
@@ -474,12 +474,12 @@ ASTConstantExpr::~ASTConstantExpr()
 {
 }
 
-ASTTokens::ASTTokens()
-    : ASTNodeList(ASTNode::Tokens, "Tokens")
+ASTPPTokens::ASTPPTokens()
+    : ASTNodeList(ASTNode::PPTokens, "PPTokens")
 {
 }
 
-ASTTokens::~ASTTokens()
+ASTPPTokens::~ASTPPTokens()
 {
 }
 
@@ -601,7 +601,7 @@ ASTNode *CreateIfExpr(ASTConstantExpr *expr)
     return expr;
 }
 
-ASTNode *CreateIfdefExpr(ASTToken *id)
+ASTNode *CreateIfdefExpr(ASTPPToken *id)
 {
     ASTConstantExpr *expr = new ASTConstantExpr();
     expr->append(CreateOp("defined"));
@@ -611,7 +611,7 @@ ASTNode *CreateIfdefExpr(ASTToken *id)
     return expr;
 }
 
-ASTNode *CreateIfndefExpr(ASTToken *id)
+ASTNode *CreateIfndefExpr(ASTPPToken *id)
 {
     ASTConstantExpr *expr = new ASTConstantExpr();
     expr->append(CreateOp('!'));
