@@ -1,10 +1,10 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#include <stdio.h>
+#include <QString>
 
-class ASTNode;
-int parseString(ASTNode **proot, const char *str);
-int parseFile(ASTNode **proot, FILE *f);
+class Context;
+int parseString(Context *ctx, const char *str);
+int parseFile(Context *ctx, const QString &fname);
 
 #endif // PARSER_H

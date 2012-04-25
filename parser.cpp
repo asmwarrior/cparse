@@ -1,31 +1,23 @@
 #include "parser.h"
 #include "context.h"
+#include "pplexer.h"
 #include "combine_yacc.h"
-#include "pp_lex.h"
 #include <stdio.h>
 
-extern int combineparse(ASTNode **proot);
+extern int combineparse(Context *ctx);
 
-int parseString(ASTNode **proot, const char *str)
+int parseString(Context *ctx, const char *str)
 {
-    int ret;
-    YY_BUFFER_STATE buf;
-    buf = pp_scan_string(str);
-    pppush_buffer_state(buf);
-    ret = combineparse(proot);
-    pp_flush_buffer(buf);
-    pppop_buffer_state();
-    return ret;
+    PPLexer pplexer;
+    pplexer.setString(str);
+    ctx->lexer = &pplexer;
+    return combineparse(ctx);
 }
 
-int parseFile(ASTNode **proot, FILE *f)
+int parseFile(Context *ctx, const QString &fname)
 {
-    int ret;
-    YY_BUFFER_STATE buf;
-    buf = pp_create_buffer(f, YY_BUF_SIZE);
-    pppush_buffer_state(buf);
-    ret = combineparse(proot);
-    pp_flush_buffer(buf);
-    pppop_buffer_state();
-    return ret;
+    PPLexer pplexer;
+    pplexer.setFileName(fname);
+    ctx->lexer = &pplexer;
+    return combineparse(ctx);
 }

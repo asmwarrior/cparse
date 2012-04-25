@@ -1,9 +1,6 @@
 %{
 #include "ast.h"
-#ifndef YYSTYPE_IS_DECLARED
-#define YYSTYPE_IS_DECLARED
-typedef ASTNode *YYSTYPE;
-#endif
+#define YY_DECL int pplex(ASTNode *&pplval)
 #include "combine_yacc.h"
 
 static void comment();
@@ -12,8 +9,7 @@ static void comment();
 %option noyywrap nodefault yylineno
 %option header-file="pp_lex.h"
 
-%s SDEFINE
-%x XLINE_START XCONTROL_LINE
+%x XLINE_START XCONTROL_LINE XDEFINE
 
 digit       [0-9]
 nondigit    [_a-zA-Z]
@@ -66,39 +62,40 @@ newline             \n
 <XCONTROL_LINE>else             {return ELSE;}
 <XCONTROL_LINE>endif            {return ENDIF;}
 <XCONTROL_LINE>include          {return INCLUDE;}
-<XCONTROL_LINE>define           {BEGIN(SDEFINE);return DEFINE;}
-<XCONTROL_LINE>defined          {combinelval = CreateOp(yytext); return DEFINED;}
+<XCONTROL_LINE>define           {BEGIN(XDEFINE);return DEFINE;}
+<XCONTROL_LINE>defined          {pplval = CreateOp(yytext); return DEFINED;}
 <XCONTROL_LINE>undef            {return UNDEF;}
 <XCONTROL_LINE>line             {return LINE;}
 <XCONTROL_LINE>error            {return ERROR;}
 <XCONTROL_LINE>pragma           {return PRAGMA;}
 
-<SDEFINE>{id}\(     {
+<XDEFINE>{id}\(     {
     QString str(yytext);
     str.chop(1);
-    combinelval = CreateID(str);
-    BEGIN(XLINE_START);
+    pplval = CreateID(str);
+    BEGIN(XCONTROL_LINE);
     return ID_FUNC;
 }
-<*>{id}             {combinelval = CreateID(yytext); return ID;}
-<*>{pp_number}      {combinelval = CreatePPNumber(yytext); return PP_NUMBER;}
+<XDEFINE>.          {yyless(0);BEGIN(XCONTROL_LINE);}
+<*>{id}             {pplval = CreateID(yytext); return ID;}
+<*>{pp_number}      {pplval = CreatePPNumber(yytext); return PP_NUMBER;}
 <*>{char_constant}  {
-    combinelval = CreateCharConstant(yytext);
+    pplval = CreateCharConstant(yytext);
     return CHAR_CONSTANT;
                     }
 <*>{string_literal} {
-    combinelval = CreateStringLiteral(yytext);
+    pplval = CreateStringLiteral(yytext);
     return STRING_LITERAL;
                     }
 <*>{newline}        {return NEWLINE;}
 <*>{ws}
 <*>{punct}          {
-    combinelval = CreateOp(yytext);
-    return static_cast<ASTPPToken*>(combinelval)->ppTokenType();
+    pplval = CreateOp(yytext);
+    return static_cast<ASTPPToken*>(pplval)->ppTokenType();
 }
 <*>.                {
-    combinelval = CreateOp(yytext[0]);
-    return static_cast<ASTPPToken*>(combinelval)->ppTokenType();
+    pplval = CreateOp(yytext[0]);
+    return static_cast<ASTPPToken*>(pplval)->ppTokenType();
 }
 
 %%

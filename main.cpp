@@ -9,15 +9,10 @@ extern int combinedebug;
 int main(int argc, char *argv[])
 {
     combinedebug = 1;
-    QCoreApplication a(argc, argv);
-    FILE *f;
     Context ctx;
     DumpVisitor visitor(&ctx);
     if (argc > 1)
-        f = fopen(argv[1], "r");
-    else
-        f = stdin;
-    parseFile(&ctx.root, f);
+        parseFile(&ctx, argv[1]);
     if (ctx.root)
         ctx.root->accept(&visitor);
 }

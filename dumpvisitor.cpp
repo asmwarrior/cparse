@@ -42,6 +42,18 @@ void DumpVisitor::visitNonDirective(ASTNode *node)
     printf("\n");
 }
 
+void DumpVisitor::visitInclude(ASTNode *node)
+{
+    printf("#include ");
+    ASTInclude *inc = static_cast<ASTInclude*>(node);
+    for (ASTNodeList::iterator iter = inc->begin();
+         iter != inc->end(); iter++) {
+
+        (*iter)->accept(this);
+    }
+    printf("\n");
+}
+
 void DumpVisitor::visitPragma(ASTNode *node)
 {
     printf("#pragma ");

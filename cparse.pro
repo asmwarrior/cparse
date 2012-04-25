@@ -29,7 +29,9 @@ SOURCES += main.cpp \
     evalvisitor.cpp \
     astexpr.cpp \
     astconstant.cpp \
-    escapeseq.cpp
+    escapeseq.cpp \
+    pplexer.cpp \
+    lexer.cpp
 
 HEADERS += \
     ast.h \
@@ -40,6 +42,8 @@ HEADERS += \
     evalvisitor.h \
     astexpr.h \
     astconstant.h \
-    escapeseq.h
+    escapeseq.h \
+    lexer.h \
+    pplexer.h
 
 

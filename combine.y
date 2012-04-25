@@ -1,6 +1,7 @@
 %{
 #include "pp_lex.h"
 #include "ast.h"
+#include "lexer.h"
 #include "context.h"
 #include <ctype.h>
 #include <stdio.h>
@@ -10,11 +11,11 @@
 #define YYSTYPE ASTNode *
 //#endif
 
-int combinelex();
-void combineerror(ASTNode **proot, const char *);
+extern int combinelex(Context *ctx);
+void combineerror(Context *ctx, const char *);
 %}
-
-%parse-param    {ASTNode **proot}
+%lex-param      {Context *ctx}
+%parse-param    {Context *ctx}
 %token AUTO
 %token BREAK
 %token CASE
@@ -113,8 +114,8 @@ void combineerror(ASTNode **proot, const char *);
 
 %%
 
-pp_file :group  {$$ = $1; *proot = $$;}
-        |       {$$ = NULL; *proot = $$;}
+pp_file :group  {$$ = $1; ctx->root = $$;}
+        |       {$$ = NULL; ctx->root = $$;}
         ;
 group   :group_part {$$ = CreateGroup($1);}
         |group group_part {static_cast<ASTGroup*>($1)->append($2); $$ = $1;}
@@ -370,13 +371,17 @@ pp_token    : ID                {$$=$1;}
 
 %%
 
-int combinelex()
+int combinelex(Context *ctx)
 {
-    return pplex();
+    if (!ctx->lexer)
+        return 0;
+    Token tok = ctx->lexer->lex();
+    combinelval = (YYSTYPE)tok.value;
+    return tok.type;
 }
 
-void combineerror(ASTNode **proot, const char *str)
+void combineerror(Context *ctx, const char *str)
 {
-    (void)proot;
+    (void)ctx;
     fprintf(stderr, "%d:%s\n", pplineno, str);
 }
