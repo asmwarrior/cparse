@@ -1,23 +1,23 @@
-#include "pp.h"
-#include "ppast.h"
-#include "ppcontext.h"
-#include "ppdumpvisitor.h"
+#include "parser.h"
+#include "ast.h"
+#include "context.h"
+#include "dumpvisitor.h"
 #include <QtCore/QCoreApplication>
 #include <stdio.h>
 
-extern int ppdebug;
+extern int combinedebug;
 int main(int argc, char *argv[])
 {
-    ppdebug = 1;
+    combinedebug = 1;
     QCoreApplication a(argc, argv);
     FILE *f;
-    PP::Context ctx;
-    PP::DumpVisitor visitor(&ctx);
+    Context ctx;
+    DumpVisitor visitor(&ctx);
     if (argc > 1)
         f = fopen(argv[1], "r");
     else
         f = stdin;
-    PP::parseFile(&ctx.root, f);
+    parseFile(&ctx.root, f);
     if (ctx.root)
         ctx.root->accept(&visitor);
 }

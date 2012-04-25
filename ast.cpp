@@ -1,14 +1,12 @@
-#include "ppast.h"
-#include "ppastvisitor.h"
-#include "pp_yacc.h"
+#include "ast.h"
+#include "astvisitor.h"
+#include "combine_yacc.h"
 #include <QString>
 #include <QList>
 #include <QMap>
 #include <QObject>
 #include <QMetaMethod>
 #include <QDebug>
-
-namespace PP {
 
 class ASTNode::Private
 {
@@ -674,6 +672,3 @@ ASTTextLine::~ASTTextLine()
 {
 }
 
-}
-
-#include "moc_ppast.cpp"

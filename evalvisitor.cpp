@@ -1,16 +1,13 @@
-#include "ppdumpvisitor.h"
-#include "ppastvisitor.h"
-#include "ppast.h"
-#include "ppcontext.h"
-#include <QDebug>
+#include "evalvisitor.h"
+#include "astvisitor.h"
+#include <stdio.h>
 
-namespace PP {
-DumpVisitor::DumpVisitor(Context *ctx)
+EvalVisitor::EvalVisitor(Context *ctx)
     : ASTVisitor(ctx)
 {
 }
 
-void DumpVisitor::visitGroup(ASTNode *node)
+void EvalVisitor::visitGroup(ASTNode *node)
 {
     ASTGroup *group = static_cast<ASTGroup *>(node);
     for (ASTNodeList::iterator iter = group->begin();
@@ -20,7 +17,7 @@ void DumpVisitor::visitGroup(ASTNode *node)
     }
 }
 
-void DumpVisitor::visitTextLine(ASTNode *node)
+void EvalVisitor::visitTextLine(ASTNode *node)
 {
     ASTTextLine *textline = static_cast<ASTTextLine *>(node);
     for (ASTNodeList::iterator iter = textline->begin();
@@ -28,10 +25,9 @@ void DumpVisitor::visitTextLine(ASTNode *node)
 
         (*iter)->accept(this);
     }
-    printf("\n");
 }
 
-void DumpVisitor::visitNonDirective(ASTNode *node)
+void EvalVisitor::visitNonDirective(ASTNode *node)
 {
     printf("# ");
     ASTNonDirective *nond = static_cast<ASTNonDirective *>(node);
@@ -40,10 +36,9 @@ void DumpVisitor::visitNonDirective(ASTNode *node)
 
         (*iter)->accept(this);
     }
-    printf("\n");
 }
 
-void DumpVisitor::visitPragma(ASTNode *node)
+void EvalVisitor::visitPragma(ASTNode *node)
 {
     printf("#pragma ");
     ASTPragma *pragma = static_cast<ASTPragma *>(node);
@@ -55,7 +50,7 @@ void DumpVisitor::visitPragma(ASTNode *node)
     printf("\n");
 }
 
-void DumpVisitor::visitIfGroup(ASTNode *node)
+void EvalVisitor::visitIfGroup(ASTNode *node)
 {
     printf("#if ");
     ASTIfGroup *ifGroup = static_cast<ASTIfGroup *>(node);
@@ -69,7 +64,7 @@ void DumpVisitor::visitIfGroup(ASTNode *node)
     printf("#endif\n");
 }
 
-void DumpVisitor::visitDefine(ASTNode *node)
+void EvalVisitor::visitDefine(ASTNode *node)
 {
     ASTDefine *def = static_cast<ASTDefine *>(node);
     printf("#define ");
@@ -89,7 +84,7 @@ void DumpVisitor::visitDefine(ASTNode *node)
     printf("\n");
 }
 
-void DumpVisitor::visitPPTokens(ASTNode *node)
+void EvalVisitor::visitPPTokens(ASTNode *node)
 {
     ASTPPTokens *tokens = static_cast<ASTPPTokens *>(node);
     for (ASTNodeList::iterator iter = tokens->begin();
@@ -99,19 +94,15 @@ void DumpVisitor::visitPPTokens(ASTNode *node)
     }
 }
 
-void DumpVisitor::visitPPToken(ASTNode *node)
+void EvalVisitor::visitPPToken(ASTNode *node)
 {
     printf("%s ", node->spellName().toAscii().constData());
 }
 
-void DumpVisitor::visitConstantExpr(ASTNode *node)
+void EvalVisitor::visitConstantExpr(ASTNode *node)
 {
     ASTConstantExpr *expr = static_cast<ASTConstantExpr *>(node);
     foreach (ASTNode *subexpr, expr->nodeList()) {
         subexpr->accept(this);
     }
 }
-
-}
-
-#include "moc_ppdumpvisitor.cpp"

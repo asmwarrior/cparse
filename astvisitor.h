@@ -1,9 +1,8 @@
-#ifndef PPASTVISITOR_H
-#define PPASTVISITOR_H
+#ifndef ASTVISITOR_H
+#define ASTVISITOR_H
 
 #include <QObject>
 
-namespace PP {
 class Context;
 class ASTVisitor: public QObject
 {
@@ -17,7 +16,6 @@ private:
     class Private;
     Private *d;
 };
-}
 
 
-#endif // PPASTVISITOR_H
+#endif // ASTVISITOR_H

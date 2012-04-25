@@ -1,10 +1,10 @@
-#ifndef PPCONTEXT_H
-#define PPCONTEXT_H
+#ifndef CONTEXT_H
+#define CONTEXT_H
 
-#include "ppast.h"
+#include "ast.h"
 #include <QString>
 #include <QMap>
-namespace PP {
+
 class Context
 {
 public:
@@ -12,6 +12,5 @@ public:
     ASTNode *root;
     QMap<QString, ASTNode *> symtab;
 };
-}
 
-#endif // PPCONTEXT_H
+#endif // CONTEXT_H

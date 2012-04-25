@@ -1,12 +1,10 @@
-#ifndef PPAST_H
-#define PPAST_H
+#ifndef AST_H
+#define AST_H
 
 #include <QString>
 #include <QPair>
 #include <QList>
 #include <QObject>
-
-namespace PP {
 
 class ASTConstantExpr;
 class ASTElifGroup;
@@ -266,6 +264,4 @@ public:
     ~ASTTextLine();
 };
 
-}
-
-#endif // PPAST_H
+#endif // AST_H

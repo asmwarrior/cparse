@@ -1,10 +1,7 @@
-#include "ppcontext.h"
-
-namespace PP {
+#include "context.h"
 
 Context::Context()
 {
     root = NULL;
 }
 
-}

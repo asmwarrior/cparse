@@ -1,10 +1,9 @@
-#ifndef PPASTEXPR_H
-#define PPASTEXPR_H
+#ifndef ASTEXPR_H
+#define ASTEXPR_H
 
-#include "ppast.h"
+#include "ast.h"
 #include <QObject>
 
-namespace PP {
 class ASTNode;
 
 class ASTExpr: public ASTNode
@@ -118,6 +117,4 @@ private:
     Private *d;
 };
 
-}
-
-#endif // PPASTEXPR_H
+#endif // ASTEXPR_H

@@ -1,10 +1,9 @@
-#ifndef PPDUMPVISITOR_H
-#define PPDUMPVISITOR_H
+#ifndef DUMPVISITOR_H
+#define DUMPVISITOR_H
 
-#include "ppastvisitor.h"
-#include "ppast.h"
+#include "astvisitor.h"
+#include "ast.h"
 
-namespace PP {
 class DumpVisitor : public ASTVisitor
 {
     Q_OBJECT
@@ -21,6 +20,5 @@ public slots:
     void visitPPToken(ASTNode *node);
     void visitConstantExpr(ASTNode *node);
 };
-}
 
-#endif // PPDUMPVISITOR_H
+#endif // DUMPVISITOR_H

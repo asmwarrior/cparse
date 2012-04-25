@@ -1,12 +1,10 @@
-#ifndef PPASTCONSTANT_H
-#define PPASTCONSTANT_H
+#ifndef ASTCONSTANT_H
+#define ASTCONSTANT_H
 
-#include "ppast.h"
+#include "ast.h"
 #include <QChar>
 #include <QObject>
 #include <QMap>
-
-namespace PP {
 
 class ASTConstant: public ASTNode
 {
@@ -78,6 +76,4 @@ ASTNode *CreateInteger(const QString &str);
 ASTNode *CreateFloat(const QString &str);
 ASTNode *CreateChar(const QString &str);
 
-}
-
-#endif // PPASTCONSTANT_H
+#endif // ASTCONSTANT_H

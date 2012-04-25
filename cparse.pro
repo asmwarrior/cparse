@@ -16,30 +16,30 @@ LEXSOURCES += \
     pp.l
 
 YACCSOURCES += \
-    pp.y
+    combine.y
 
 QMAKE_YACCFLAGS = -t -d --report=all
 
 SOURCES += main.cpp \
-    ppast.cpp \
-    pp.cpp \
-    ppcontext.cpp \
-    ppastvisitor.cpp \
-    ppdumpvisitor.cpp \
-    ppevalvisitor.cpp \
-    ppastexpr.cpp \
-    ppastconstant.cpp \
+    ast.cpp \
+    parser.cpp \
+    context.cpp \
+    astvisitor.cpp \
+    dumpvisitor.cpp \
+    evalvisitor.cpp \
+    astexpr.cpp \
+    astconstant.cpp \
     escapeseq.cpp
 
 HEADERS += \
-    ppast.h \
-    pp.h \
-    ppcontext.h \
-    ppastvisitor.h \
-    ppdumpvisitor.h \
-    ppevalvisitor.h \
-    ppastexpr.h \
-    ppastconstant.h \
+    ast.h \
+    parser.h \
+    context.h \
+    astvisitor.h \
+    dumpvisitor.h \
+    evalvisitor.h \
+    astexpr.h \
+    astconstant.h \
     escapeseq.h
 
 

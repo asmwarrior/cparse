@@ -1,11 +1,10 @@
-#ifndef PPEVALVISITOR_H
-#define PPEVALVISITOR_H
+#ifndef EVALVISITOR_H
+#define EVALVISITOR_H
 
-#include "ppast.h"
-#include "ppastvisitor.h"
-#include "ppcontext.h"
+#include "ast.h"
+#include "astvisitor.h"
+#include "context.h"
 
-namespace PP {
 class EvalVisitor : public ASTVisitor
 {
     Q_OBJECT
@@ -22,6 +21,5 @@ public slots:
     void visitPPToken(ASTNode *node);
     void visitConstantExpr(ASTNode *node);
 };
-}
 
-#endif // PPEVALVISITOR_H
+#endif // EVALVISITOR_H

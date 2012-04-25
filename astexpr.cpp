@@ -1,7 +1,5 @@
-#include "ppastexpr.h"
-#include "ppast.h"
-
-namespace PP {
+#include "astexpr.h"
+#include "ast.h"
 
 class ASTExpr::Private
 {
@@ -159,7 +157,3 @@ ASTExpr *ASTTernaryExpr::thirdExpr() const
 {
     return d->thirdExpr;
 }
-
-}
-
-#include "moc_ppastexpr.cpp"

@@ -1,14 +1,13 @@
 %{
-#include "ppast.h"
-using namespace PP;
+#include "ast.h"
 #ifndef YYSTYPE_IS_DECLARED
 #define YYSTYPE_IS_DECLARED
 typedef ASTNode *YYSTYPE;
 #endif
-#include "pp_yacc.h"
+#include "combine_yacc.h"
 
 %}
-%option noyywrap nodefault yylineno
+%option noyywrap nodefault nounput yylineno
 %option header-file="pp_lex.h"
 
 %s SDEFINE
@@ -62,38 +61,38 @@ else                {return ELSE;}
 endif               {return ENDIF;}
 include             {return INCLUDE;}
 define              {BEGIN(SDEFINE);return DEFINE;}
-defined             {pplval = CreateOp(yytext); return DEFINED;}
+defined             {combinelval = CreateOp(yytext); return DEFINED;}
 undef               {return UNDEF;}
 line                {return LINE;}
 error               {return ERROR;}
 pragma              {return PRAGMA;}
 
-{id}                {pplval = CreateID(yytext); return ID;}
-{pp_number}         {pplval = CreatePPNumber(yytext); return PP_NUMBER;}
+{id}                {combinelval = CreateID(yytext); return ID;}
+{pp_number}         {combinelval = CreatePPNumber(yytext); return PP_NUMBER;}
 {char_constant}     {
-    pplval = CreateCharConstant(yytext);
+    combinelval = CreateCharConstant(yytext);
     return CHAR_CONSTANT;
                     }
 {string_literal}    {
-    pplval = CreateStringLiteral(yytext);
+    combinelval = CreateStringLiteral(yytext);
     return STRING_LITERAL;
                     }
 <SDEFINE>{id}\(     {
     QString str(yytext);
     str.chop(1);
-    pplval = CreateID(str);
+    combinelval = CreateID(str);
     BEGIN(0);
     return ID_FUNC;
 }
 {newline}           {return NEWLINE;}
 {ws}
 {punct} {
-    pplval = CreateOp(yytext);
-    return static_cast<ASTPPToken*>(pplval)->ppTokenType();
+    combinelval = CreateOp(yytext);
+    return static_cast<ASTPPToken*>(combinelval)->ppTokenType();
 }
 .   {
-    pplval = CreateOp(yytext[0]);
-    return static_cast<ASTPPToken*>(pplval)->ppTokenType();
+    combinelval = CreateOp(yytext[0]);
+    return static_cast<ASTPPToken*>(combinelval)->ppTokenType();
 }
 
 %%

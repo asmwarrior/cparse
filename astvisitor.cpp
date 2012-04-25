@@ -1,7 +1,5 @@
-#include "ppastvisitor.h"
-#include "ppcontext.h"
-
-namespace PP {
+#include "astvisitor.h"
+#include "context.h"
 
 class ASTVisitor::Private
 {
@@ -21,7 +19,3 @@ Context *ASTVisitor::context()
 {
     return d->context;
 }
-
-}
-
-#include "moc_ppastvisitor.cpp"

@@ -1,13 +1,11 @@
-#include "ppastconstant.h"
-#include "ppast.h"
-#include "pp_yacc.h"
+#include "astconstant.h"
+#include "ast.h"
+#include "combine_yacc.h"
 #include "escapeseq.h"
 #include <stdlib.h>
 #include <errno.h>
 #include <QChar>
 #include <QDebug>
-
-namespace PP {
 
 class ASTConstant::Private
 {
@@ -15,7 +13,7 @@ public:
     ASTConstant::ConstantType constantType;
 };
 
-ASTConstant::ASTConstant(PP::ASTConstant::ConstantType t)
+ASTConstant::ASTConstant(ASTConstant::ConstantType t)
     : ASTNode(ASTNode::Constant, "Constant"),
       d(new ASTConstant::Private)
 {
@@ -286,6 +284,4 @@ ASTNode *CreateFloat(const QString &str)
     qDebug() << __func__ << "not implemented.";
     Q_UNUSED(str);
     return NULL;
-}
-
 }

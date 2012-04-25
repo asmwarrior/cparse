@@ -1,20 +1,17 @@
 %{
-#include "ppast.h"
-#include "ppcontext.h"
+#include "pp_lex.h"
+#include "ast.h"
+#include "context.h"
 #include <ctype.h>
 #include <stdio.h>
 
-using namespace PP;
+//#ifndef YYSTYPE_IS_DECLARED
+//#define YYSTYPE_IS_DECLARED
+#define YYSTYPE ASTNode *
+//#endif
 
-#ifndef YYSTYPE_IS_DECLARED
-#define YYSTYPE_IS_DECLARED
-typedef ASTNode *YYSTYPE;
-#endif
-
-extern int pplineno;
-extern int pplex();
-extern ASTNode *pplval;
-void pperror(ASTNode **proot, const char *);
+int combinelex();
+void combineerror(ASTNode **proot, const char *);
 %}
 
 %parse-param    {ASTNode **proot}
@@ -373,7 +370,12 @@ pp_token    : ID                {$$=$1;}
 
 %%
 
-void pperror(ASTNode **proot, const char *str)
+int combinelex()
+{
+    return pplex();
+}
+
+void combineerror(ASTNode **proot, const char *str)
 {
     (void)proot;
     fprintf(stderr, "%d:%s\n", pplineno, str);
