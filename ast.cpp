@@ -84,6 +84,7 @@ ASTNode *CreateOp(const QString &str)
         opMap.insert("=", '=');
         opMap.insert(",", ',');
         opMap.insert("#", '#');
+        opMap.insert("!", '!');
         opMap.insert("->", MEMBER_REF);
         opMap.insert("++", PLUS_PLUS);
         opMap.insert("--", MINUS_MINUS);

@@ -6,12 +6,14 @@ typedef ASTNode *YYSTYPE;
 #endif
 #include "combine_yacc.h"
 
+static void comment();
+
 %}
-%option noyywrap nodefault nounput yylineno
+%option noyywrap nodefault yylineno
 %option header-file="pp_lex.h"
 
 %s SDEFINE
-%x XLINESTART
+%x XLINE_START XCONTROL_LINE
 
 digit       [0-9]
 nondigit    [_a-zA-Z]
@@ -44,55 +46,74 @@ char_constant       '{c_char_seq}'|L'{c_char_seq}'
 string_literal      \"{s_char_seq}?\"|L\"{s_char_seq}?\"
 s_char_seq          {s_char}*
 s_char              [^\"\\\n]|{escape_seq}
-punct               [\[\]\(\)\{\}\.&\*\+-~\/%\^\|<>\?:;=,#]|->|\+\+|--|<<|>>|<=|>=|==|!=|&&|\*=|\/=|%=|\+=|-=|<<=|>>=|&=|\^=|\|=|##|<:|:>|<%|%>|%:|%:%:|\.\.\.
+punct               [\[\]\(\)\{\}\.&\*\+-~\/%\^\|<>\?:;=,#!]|->|\+\+|--|<<|>>|<=|>=|==|!=|&&|\*=|\/=|%=|\+=|-=|<<=|>>=|&=|\^=|\|=|##|<:|:>|<%|%>|%:|%:%:|\.\.\.
 ws                  [ \t]
 newline             \n
 
 %%
-^.                  {yyless(0);BEGIN(XLINESTART);}
-<XLINESTART>#       {BEGIN(0);return LINESTART_HASH;}
-<XLINESTART>{ws}    
-<XLINESTART>.|\n    {yyless(0);BEGIN(0);}
-if                  {return IF;}
-ifdef               {return IFDEF;}
-ifndef              {return IFNDEF;}
-elif                {return ELIF;}
-else                {return ELSE;}
-endif               {return ENDIF;}
-include             {return INCLUDE;}
-define              {BEGIN(SDEFINE);return DEFINE;}
-defined             {combinelval = CreateOp(yytext); return DEFINED;}
-undef               {return UNDEF;}
-line                {return LINE;}
-error               {return ERROR;}
-pragma              {return PRAGMA;}
+<*>^\/\*                        {comment();BEGIN(XLINE_START);}
+<*>\/\*                         {comment();}
+<*>\/\/.*                       
 
-{id}                {combinelval = CreateID(yytext); return ID;}
-{pp_number}         {combinelval = CreatePPNumber(yytext); return PP_NUMBER;}
-{char_constant}     {
-    combinelval = CreateCharConstant(yytext);
-    return CHAR_CONSTANT;
-                    }
-{string_literal}    {
-    combinelval = CreateStringLiteral(yytext);
-    return STRING_LITERAL;
-                    }
+<*>^.                           {yyless(0);BEGIN(XLINE_START);}
+<XLINE_START>#                  {BEGIN(XCONTROL_LINE);return LINESTART_HASH;}
+<XLINE_START>{ws}    
+<XLINE_START>.|\n               {yyless(0);BEGIN(0);}
+<XCONTROL_LINE>if               {return IF;}
+<XCONTROL_LINE>ifdef            {return IFDEF;}
+<XCONTROL_LINE>ifndef           {return IFNDEF;}
+<XCONTROL_LINE>elif             {return ELIF;}
+<XCONTROL_LINE>else             {return ELSE;}
+<XCONTROL_LINE>endif            {return ENDIF;}
+<XCONTROL_LINE>include          {return INCLUDE;}
+<XCONTROL_LINE>define           {BEGIN(SDEFINE);return DEFINE;}
+<XCONTROL_LINE>defined          {combinelval = CreateOp(yytext); return DEFINED;}
+<XCONTROL_LINE>undef            {return UNDEF;}
+<XCONTROL_LINE>line             {return LINE;}
+<XCONTROL_LINE>error            {return ERROR;}
+<XCONTROL_LINE>pragma           {return PRAGMA;}
+
 <SDEFINE>{id}\(     {
     QString str(yytext);
     str.chop(1);
     combinelval = CreateID(str);
-    BEGIN(0);
+    BEGIN(XLINE_START);
     return ID_FUNC;
 }
-{newline}           {return NEWLINE;}
-{ws}
-{punct} {
+<*>{id}             {combinelval = CreateID(yytext); return ID;}
+<*>{pp_number}      {combinelval = CreatePPNumber(yytext); return PP_NUMBER;}
+<*>{char_constant}  {
+    combinelval = CreateCharConstant(yytext);
+    return CHAR_CONSTANT;
+                    }
+<*>{string_literal} {
+    combinelval = CreateStringLiteral(yytext);
+    return STRING_LITERAL;
+                    }
+<*>{newline}        {return NEWLINE;}
+<*>{ws}
+<*>{punct}          {
     combinelval = CreateOp(yytext);
     return static_cast<ASTPPToken*>(combinelval)->ppTokenType();
 }
-.   {
+<*>.                {
     combinelval = CreateOp(yytext[0]);
     return static_cast<ASTPPToken*>(combinelval)->ppTokenType();
 }
 
 %%
+void comment()
+{
+    char c, c1;
+
+loop:
+    while (((c = yyinput()) != '*') && (c != 0))
+        ;
+
+    if (((c1 = yyinput()) != '/') && (c != 0)) {
+        unput(c1);
+        goto loop;
+    }
+
+}
+
