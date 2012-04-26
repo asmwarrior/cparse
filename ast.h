@@ -51,6 +51,7 @@ ASTNode *CreateNonDirective(ASTPPTokens *PPTokens);
 ASTNode *CreateTextLine();
 ASTNode *CreateTextLine(ASTPPTokens *PPTokens);
 ASTNode *CreateConstantExpr(ASTPPTokens *PPTokens);
+ASTNode *CreatePlaceMarker();
 
 class ASTVisitor;
 class ASTNode: public QObject
@@ -69,6 +70,7 @@ public:
         Undef,
         IfGroup,
         TextLine,
+        TextLines,
         NonDirective,
         Group,
         ElifElem,
@@ -94,6 +96,7 @@ public:
     int ppTokenType() const;
     bool isOp() const;
     bool isID() const;
+    bool isPlaceMarker() const;
     bool isPPNumber() const;
     bool isCharConstant() const;
     bool isStringLiteral() const;
@@ -110,6 +113,7 @@ public:
     ASTNodeList(ASTNode::Type type, const QString &name);
     virtual ~ASTNodeList();
     bool isEmpty() const;
+    int size() const;
     void append(ASTNode *node);
     void append(const ASTNodeList &nodeList);
     iterator begin() const;
@@ -245,6 +249,8 @@ class ASTGroup: public ASTNodeList
     Q_OBJECT
 public:
     ASTGroup();
+    void appendPart(ASTNode *gpart);
+    void appendTextLine(ASTNode *textLine);
     ~ASTGroup();
 };
 
@@ -262,6 +268,16 @@ class ASTTextLine: public ASTNodeList
 public:
     ASTTextLine();
     ~ASTTextLine();
+};
+
+class ASTTextLines: public ASTNodeList
+{
+    Q_OBJECT
+public:
+    ASTTextLines();
+    ~ASTTextLines();
+    int ppTokenCount() const;
+    ASTPPToken *ppTokenAt(int i) const;
 };
 
 #endif // AST_H

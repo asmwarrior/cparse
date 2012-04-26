@@ -30,6 +30,16 @@ void DumpVisitor::visitTextLine(ASTNode *node)
     printf("\n");
 }
 
+void DumpVisitor::visitTextLines(ASTNode *node)
+{
+    ASTTextLines *textlines = static_cast<ASTTextLines *>(node);
+    for (ASTNodeList::iterator iter = textlines->begin();
+         iter != textlines->end(); iter++) {
+
+        (*iter)->accept(this);
+    }
+}
+
 void DumpVisitor::visitNonDirective(ASTNode *node)
 {
     printf("# ");

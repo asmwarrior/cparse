@@ -12,6 +12,7 @@ public:
 public slots:
     void visitGroup(ASTNode *node);
     void visitTextLine(ASTNode *node);
+    void visitTextLines(ASTNode *node);
     void visitNonDirective(ASTNode *node);
     void visitInclude(ASTNode *node);
     void visitPragma(ASTNode *node);

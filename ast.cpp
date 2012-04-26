@@ -133,6 +133,12 @@ ASTNode *CreateID(const QString &str)
     return new ASTPPToken(ID, str);
 }
 
+ASTNode *CreatePlaceMarker()
+{
+    return new ASTPPToken(PLACE_MARKER, "");
+}
+
+
 ASTNode *CreatePPNumber(const QString &str)
 {
     return new ASTPPToken(PP_NUMBER, str);
@@ -281,6 +287,11 @@ ASTNodeList::~ASTNodeList()
 bool ASTNodeList::isEmpty() const
 {
     return d->list.isEmpty();
+}
+
+int ASTNodeList::size() const
+{
+    return d->list.size();
 }
 
 void ASTNodeList::append(ASTNode *node)
@@ -449,6 +460,11 @@ bool ASTPPToken::isID() const
     return ppTokenType() == ID;
 }
 
+bool ASTPPToken::isPlaceMarker() const
+{
+    return ppTokenType() == PLACE_MARKER;
+}
+
 bool ASTPPToken::isPPNumber() const
 {
     return ppTokenType() == PP_NUMBER;
@@ -575,6 +591,26 @@ ASTGroup::ASTGroup()
 {
 }
 
+void ASTGroup::appendPart(ASTNode *gpart)
+{
+    if (gpart->type() == ASTNode::TextLine)
+        appendTextLine(gpart);
+    else
+        append(gpart);
+}
+
+void ASTGroup::appendTextLine(ASTNode *textLine)
+{
+    ASTTextLines *tls;
+    if (isEmpty() || (nodeList().last()->type() != ASTNode::TextLines)) {
+        tls = new ASTTextLines();
+        append(tls);
+    } else {
+        tls = static_cast<ASTTextLines*>(nodeList().last());
+    }
+    tls->append(textLine);
+}
+
 ASTGroup::~ASTGroup()
 {
 }
@@ -671,5 +707,36 @@ ASTTextLine::ASTTextLine()
 
 ASTTextLine::~ASTTextLine()
 {
+}
+
+ASTTextLines::ASTTextLines()
+    : ASTNodeList(ASTNode::TextLines, "TextLines")
+{
+}
+
+ASTTextLines::~ASTTextLines()
+{
+}
+
+int ASTTextLines::ppTokenCount() const
+{
+    int count = 0;
+    for (ASTNodeList::iterator iter = begin(); iter != end(); iter++) {
+        count += static_cast<ASTTextLine*>(*iter)->size();
+    }
+    return count;
+}
+
+ASTPPToken *ASTTextLines::ppTokenAt(int i) const
+{
+    ASTTextLine *tl;
+    for (ASTNodeList::iterator iter = begin(); iter != end(); iter++) {
+        tl = static_cast<ASTTextLine*>(*iter);
+        if (i < tl->size())
+            return static_cast<ASTPPToken*>(tl->nodeList().at(i));
+        else
+            i -= tl->size();
+    }
+    return NULL;
 }
 

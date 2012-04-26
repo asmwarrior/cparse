@@ -111,6 +111,7 @@ void combineerror(Context *ctx, const char *);
 %token TEXT_LINE
 %token NODE_LIST
 %token CONSTANT_EXPR
+%token PLACE_MARKER
 
 %%
 
@@ -118,7 +119,7 @@ pp_file :group  {$$ = $1; ctx->root = $$;}
         |       {$$ = NULL; ctx->root = $$;}
         ;
 group   :group_part {$$ = CreateGroup($1);}
-        |group group_part {static_cast<ASTGroup*>($1)->append($2); $$ = $1;}
+        |group group_part {static_cast<ASTGroup*>($1)->appendPart($2); $$ = $1;}
         ;
 group_part  :if_group {$$ = $1;}
             |control_line {$$ = $1;}
@@ -303,6 +304,11 @@ non_directive   : pp_tokens NEWLINE
                 ;
 id_list     : ID                {$$=CreatePPTokens(static_cast<ASTPPToken *>($1));}
             | id_list ',' ID    {static_cast<ASTPPTokens*>($1)->append($3); $$=$1;}
+            | id_list ','
+{
+    static_cast<ASTPPTokens*>($1)->append(CreatePlaceMarker());
+    $$=$1;
+}
             ;
 replacement_list: pp_tokens     {$$=$1;}
                 ;

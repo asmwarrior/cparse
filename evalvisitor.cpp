@@ -1,10 +1,33 @@
 #include "evalvisitor.h"
 #include "astvisitor.h"
+#include "combine_yacc.h"
 #include <stdio.h>
+#include <QList>
+#include <QDebug>
+
+class EvalVisitor::Private
+{
+public:
+    Private(EvalVisitor *qq) : q(qq) {}
+    EvalVisitor::MacroArgList getMacroArg(ASTTextLines *tls, int *idx, bool *ok);
+    EvalVisitor::MacroArgList getMacroArgs(ASTTextLines *tls, int *idx, bool *ok);
+    EvalVisitor::PPTokenList expandFunctionMacro(
+            ASTDefine *def, const EvalVisitor::MacroArgList &args);
+    EvalVisitor::PPTokenList expandObjectMacro(
+            ASTDefine *def);
+    EvalVisitor *q;
+    QList<ASTPPToken*> ppTokens;
+};
 
 EvalVisitor::EvalVisitor(Context *ctx)
-    : ASTVisitor(ctx)
+    : ASTVisitor(ctx),
+      d(new EvalVisitor::Private(this))
 {
+}
+
+EvalVisitor::~EvalVisitor()
+{
+    delete d;
 }
 
 void EvalVisitor::visitGroup(ASTNode *node)
@@ -17,92 +40,48 @@ void EvalVisitor::visitGroup(ASTNode *node)
     }
 }
 
-void EvalVisitor::visitTextLine(ASTNode *node)
+void EvalVisitor::visitTextLines(ASTNode *node)
 {
-    ASTTextLine *textline = static_cast<ASTTextLine *>(node);
-    for (ASTNodeList::iterator iter = textline->begin();
-         iter != textline->end(); iter++) {
 
-        (*iter)->accept(this);
-    }
 }
 
 void EvalVisitor::visitNonDirective(ASTNode *node)
 {
-    printf("# ");
-    ASTNonDirective *nond = static_cast<ASTNonDirective *>(node);
-    for (ASTNodeList::iterator iter = nond->begin();
-         iter != nond->end(); iter++) {
-
-        (*iter)->accept(this);
-    }
 }
 
 void EvalVisitor::visitPragma(ASTNode *node)
 {
-    printf("#pragma ");
-    ASTPragma *pragma = static_cast<ASTPragma *>(node);
-    for (ASTNodeList::iterator iter = pragma->begin();
-         iter != pragma->end(); iter++) {
-
-        (*iter)->accept(this);
-    }
-    printf("\n");
 }
 
 void EvalVisitor::visitIfGroup(ASTNode *node)
 {
-    printf("#if ");
-    ASTIfGroup *ifGroup = static_cast<ASTIfGroup *>(node);
-    ifGroup->expr()->accept(this);
-    printf("\n");
-    if (ifGroup->trueBranch())
-        ifGroup->trueBranch()->accept(this);
-    printf("#else\n");
-    if (ifGroup->falseBranch())
-        ifGroup->falseBranch()->accept(this);
-    printf("#endif\n");
 }
 
 void EvalVisitor::visitDefine(ASTNode *node)
 {
-    ASTDefine *def = static_cast<ASTDefine *>(node);
-    printf("#define ");
-    def->id()->accept(this);
-    if (def->args()) {
-        printf("( ");
-        foreach (ASTNode *arg, def->args()->nodeList()) {
-            arg->accept(this);
-            printf(", ");
-        }
-        if (def->isVarArgs())
-            printf("... ");
-        printf(") ");
-    }
-    if (def->body())
-        def->body()->accept(this);
-    printf("\n");
+    ASTDefine *def = static_cast<ASTDefine*>(node);
+    context()->symtab.insert(def->id()->spellName(), def);
 }
 
-void EvalVisitor::visitPPTokens(ASTNode *node)
+void EvalVisitor::visitUndef(ASTNode *node)
 {
-    ASTPPTokens *tokens = static_cast<ASTPPTokens *>(node);
-    for (ASTNodeList::iterator iter = tokens->begin();
-         iter != tokens->end(); iter++) {
-
-        (*iter)->accept(this);
-    }
+    ASTUndef *und = static_cast<ASTUndef*>(node);
+    context()->symtab.remove(und->id()->spellName());
 }
 
-void EvalVisitor::visitPPToken(ASTNode *node)
+EvalVisitor::MacroArgList EvalVisitor::Private::getMacroArg(ASTTextLines *tls, int *idx, bool *ok)
 {
-    printf("%s ", node->spellName().toAscii().constData());
 }
 
-void EvalVisitor::visitConstantExpr(ASTNode *node)
+EvalVisitor::MacroArgList EvalVisitor::Private::getMacroArgs(ASTTextLines *tls, int *idx, bool *ok)
 {
-    ASTConstantExpr *expr = static_cast<ASTConstantExpr *>(node);
-    foreach (ASTNode *subexpr, expr->nodeList()) {
-        subexpr->accept(this);
-    }
+}
+
+EvalVisitor::PPTokenList EvalVisitor::Private::expandFunctionMacro(ASTDefine *def,
+    const EvalVisitor::MacroArgList &args)
+{
+}
+
+EvalVisitor::PPTokenList EvalVisitor::Private::expandObjectMacro(ASTDefine *def)
+{
 }
