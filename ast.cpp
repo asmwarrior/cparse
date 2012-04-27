@@ -324,12 +324,12 @@ class ASTDefine::Private
 {
 public:
     ASTPPToken *id;
-    ASTNodeList *args;
-    ASTNodeList *body;
+    ASTPPTokens *args;
+    ASTPPTokens *body;
     bool vargs;
 };
 
-ASTDefine::ASTDefine(ASTPPToken *id, ASTNodeList *args, ASTNodeList *body)
+ASTDefine::ASTDefine(ASTPPToken *id, ASTPPTokens *args, ASTPPTokens *body)
     : ASTNode(ASTNode::Define, "Define"),
       d(new ASTDefine::Private)
 {
@@ -349,12 +349,12 @@ ASTPPToken* ASTDefine::id() const
     return d->id;
 }
 
-ASTNodeList *ASTDefine::args() const
+ASTPPTokens *ASTDefine::args() const
 {
     return d->args;
 }
 
-ASTNodeList *ASTDefine::body() const
+ASTPPTokens *ASTDefine::body() const
 {
     return d->body;
 }
@@ -498,6 +498,16 @@ ASTPPTokens::~ASTPPTokens()
 {
 }
 
+QList<ASTPPToken *> ASTPPTokens::tokenList() const
+{
+    ASTNodeList::iterator iter;
+    QList<ASTPPToken*> tlist;
+    for (iter = begin(); iter != end(); iter++) {
+        tlist << static_cast<ASTPPToken*>(*iter);
+    }
+    return tlist;
+}
+
 class ASTElifElement::Private
 {
 public:
@@ -601,12 +611,12 @@ void ASTGroup::appendPart(ASTNode *gpart)
 
 void ASTGroup::appendTextLine(ASTNode *textLine)
 {
-    ASTTextLines *tls;
+    ASTTextGroup *tls;
     if (isEmpty() || (nodeList().last()->type() != ASTNode::TextLines)) {
-        tls = new ASTTextLines();
+        tls = new ASTTextGroup();
         append(tls);
     } else {
-        tls = static_cast<ASTTextLines*>(nodeList().last());
+        tls = static_cast<ASTTextGroup*>(nodeList().last());
     }
     tls->append(textLine);
 }
@@ -709,34 +719,25 @@ ASTTextLine::~ASTTextLine()
 {
 }
 
-ASTTextLines::ASTTextLines()
+ASTTextGroup::ASTTextGroup()
     : ASTNodeList(ASTNode::TextLines, "TextLines")
 {
 }
 
-ASTTextLines::~ASTTextLines()
+ASTTextGroup::~ASTTextGroup()
 {
 }
 
-int ASTTextLines::ppTokenCount() const
-{
-    int count = 0;
-    for (ASTNodeList::iterator iter = begin(); iter != end(); iter++) {
-        count += static_cast<ASTTextLine*>(*iter)->size();
-    }
-    return count;
-}
-
-ASTPPToken *ASTTextLines::ppTokenAt(int i) const
+QList<ASTPPToken*> ASTTextGroup::tokenList() const
 {
     ASTTextLine *tl;
-    for (ASTNodeList::iterator iter = begin(); iter != end(); iter++) {
+    ASTNodeList::iterator iter, jter;
+    QList<ASTPPToken*> tlist;
+    for (iter = begin(); iter != end(); iter++) {
         tl = static_cast<ASTTextLine*>(*iter);
-        if (i < tl->size())
-            return static_cast<ASTPPToken*>(tl->nodeList().at(i));
-        else
-            i -= tl->size();
+        for (jter = tl->begin(); jter != tl->end(); jter++)
+            tlist << static_cast<ASTPPToken*>(*jter);
     }
-    return NULL;
+    return tlist;
 }
 

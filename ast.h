@@ -132,6 +132,7 @@ class ASTPPTokens: public ASTNodeList
 public:
     ASTPPTokens();
     ~ASTPPTokens();
+    QList<ASTPPToken *> tokenList() const;
 };
 
 class ASTInclude: public ASTNodeList
@@ -149,11 +150,11 @@ class ASTDefine: public ASTNode
 {
     Q_OBJECT
 public:
-    ASTDefine(ASTPPToken *id, ASTNodeList *args, ASTNodeList *body);
+    ASTDefine(ASTPPToken *id, ASTPPTokens *args, ASTPPTokens *body);
     ~ASTDefine();
     ASTPPToken *id() const;
-    ASTNodeList *args() const;
-    ASTNodeList *body() const;
+    ASTPPTokens *args() const;
+    ASTPPTokens *body() const;
     bool isVarArgs() const;
     void setVarArgs(bool vargs);
 private:
@@ -270,14 +271,13 @@ public:
     ~ASTTextLine();
 };
 
-class ASTTextLines: public ASTNodeList
+class ASTTextGroup: public ASTNodeList
 {
     Q_OBJECT
 public:
-    ASTTextLines();
-    ~ASTTextLines();
-    int ppTokenCount() const;
-    ASTPPToken *ppTokenAt(int i) const;
+    ASTTextGroup();
+    ~ASTTextGroup();
+    QList<ASTPPToken*> tokenList() const;
 };
 
 #endif // AST_H

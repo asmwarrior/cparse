@@ -76,6 +76,7 @@ newline             \n
     BEGIN(XCONTROL_LINE);
     return ID_FUNC;
 }
+<XDEFINE>{ws}
 <XDEFINE>.          {yyless(0);BEGIN(XCONTROL_LINE);}
 <*>{id}             {pplval = CreateID(yytext); return ID;}
 <*>{pp_number}      {pplval = CreatePPNumber(yytext); return PP_NUMBER;}

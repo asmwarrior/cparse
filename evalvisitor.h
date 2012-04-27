@@ -17,7 +17,7 @@ public:
     ~EvalVisitor();
 public slots:
     void visitGroup(ASTNode *node);
-    void visitTextLines(ASTNode *node);
+    void visitTextGroup(ASTNode *node);
     void visitNonDirective(ASTNode *node);
     void visitPragma(ASTNode *node);
     void visitIfGroup(ASTNode *node);
