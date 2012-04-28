@@ -76,3 +76,11 @@ loopNext:
     return s;
 }
 
+QString EscapeSequence::Escape(const QString &str)
+{
+    QString s = str;
+    s.replace("\\", "\\\\");
+    s.replace("\"", "\\\"");
+    return s;
+}
+

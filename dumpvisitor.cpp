@@ -99,7 +99,8 @@ void DumpVisitor::visitDefine(ASTNode *node)
         printf("( ");
         foreach (ASTNode *arg, def->args()->nodeList()) {
             arg->accept(this);
-            printf(", ");
+            if (arg != def->args()->nodeList().last())
+                printf(", ");
         }
         if (def->isVarArgs())
             printf("... ");

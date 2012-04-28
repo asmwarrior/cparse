@@ -2,6 +2,7 @@
 #include "ast.h"
 #include "astvisitor.h"
 #include "combine_yacc.h"
+#include "escapeseq.h"
 #include <stdio.h>
 #include <QList>
 #include <QListIterator>
@@ -353,6 +354,7 @@ QList<ASTPPToken *> EvalVisitor::Private::filterHash(
     tokens = inTokens;
     QMutableListIterator<ASTPPToken *> i(tokens);
     QString param;
+    QString s;
     while (i.hasNext()) {
         if (i.next()->ppTokenType() == '#') {
             if (i.hasNext() && (i.peekNext()->ppTokenType() == ID)
@@ -361,8 +363,15 @@ QList<ASTPPToken *> EvalVisitor::Private::filterHash(
                 param = i.peekNext()->spellName();
                 i.next();
                 i.remove();
+                s.clear();
                 foreach (ASTPPToken *t, argMap.value(param))
-                    i.insert(t);
+                    s += t->spellName() + " ";
+                if (s.endsWith(" "))
+                    s.chop(1);
+                s = EscapeSequence::Escape(s );
+                s.prepend('"');
+                s.append('"');
+                i.insert(static_cast<ASTPPToken*>(CreateStringLiteral(s)));
             } else {
                 tokens.clear();
                 qWarning() << "Expect macro parameter name after '#'";
