@@ -8,6 +8,8 @@
 #include <QMetaMethod>
 #include <QDebug>
 
+QMap<QString, int> GOpMap;
+
 class ASTNode::Private
 {
 public:
@@ -55,70 +57,68 @@ void ASTNode::accept(ASTVisitor *visitor)
 ASTNode *CreateOp(const QString &str)
 {
     static bool mapInit = false;
-    static QMap<QString, int> opMap;
     if (!mapInit) {
         mapInit = true;
-        opMap.insert("defined", DEFINED);
-        opMap.insert("[", '[');
-        opMap.insert("]", ']');
-        opMap.insert("(", '(');
-        opMap.insert(")", ')');
-        opMap.insert("{", '{');
-        opMap.insert("}", '}');
-        opMap.insert(".", '.');
-        opMap.insert("&", '&');
-        opMap.insert("*", '*');
-        opMap.insert("+", '+');
-        opMap.insert("-", '-');
-        opMap.insert("~", '~');
-        opMap.insert("/", '/');
-        opMap.insert("%", '%');
-        opMap.insert("^", '^');
-        opMap.insert("(", ')');
-        opMap.insert("|", '|');
-        opMap.insert("<", '<');
-        opMap.insert(">", '>');
-        opMap.insert("?", '?');
-        opMap.insert(":", ':');
-        opMap.insert(";", ';');
-        opMap.insert("=", '=');
-        opMap.insert(",", ',');
-        opMap.insert("#", '#');
-        opMap.insert("!", '!');
-        opMap.insert("->", MEMBER_REF);
-        opMap.insert("++", PLUS_PLUS);
-        opMap.insert("--", MINUS_MINUS);
-        opMap.insert("<<", LSHIFT);
-        opMap.insert(">>", RSHIFT);
-        opMap.insert("<=", LE);
-        opMap.insert(">=", GE);
-        opMap.insert("==", EQ);
-        opMap.insert("!=", NE);
-        opMap.insert("&&", AND_AND);
-        opMap.insert("*=", MULT_ASSIGN);
-        opMap.insert("/=", DIV_ASSIGN);
-        opMap.insert("%=", MOD_ASSIGN);
-        opMap.insert("+=", PLUS_ASSIGN);
-        opMap.insert("-=", MINUS_ASSIGN);
-        opMap.insert("<<=", LSHIFT_ASSIGN);
-        opMap.insert(">>=", RSHIFT_ASSIGN);
-        opMap.insert("&=", AND_ASSIGN);
-        opMap.insert("^=", XOR_ASSIGN);
-        opMap.insert("|=", OR_ASSIGN);
-        opMap.insert("##", HASH_HASH);
-        opMap.insert("<:", '[');
-        opMap.insert(":>", ']');
-        opMap.insert("<%", '{');
-        opMap.insert("%>", '}');
-        opMap.insert("%:", '#');
-        opMap.insert("%:%:", HASH_HASH);
-        opMap.insert("...", DOT_DOT_DOT);
+        GOpMap.insert("defined", DEFINED);
+        GOpMap.insert("[", '[');
+        GOpMap.insert("]", ']');
+        GOpMap.insert("(", '(');
+        GOpMap.insert(")", ')');
+        GOpMap.insert("{", '{');
+        GOpMap.insert("}", '}');
+        GOpMap.insert(".", '.');
+        GOpMap.insert("&", '&');
+        GOpMap.insert("*", '*');
+        GOpMap.insert("+", '+');
+        GOpMap.insert("-", '-');
+        GOpMap.insert("~", '~');
+        GOpMap.insert("/", '/');
+        GOpMap.insert("%", '%');
+        GOpMap.insert("^", '^');
+        GOpMap.insert("|", '|');
+        GOpMap.insert("<", '<');
+        GOpMap.insert(">", '>');
+        GOpMap.insert("?", '?');
+        GOpMap.insert(":", ':');
+        GOpMap.insert(";", ';');
+        GOpMap.insert("=", '=');
+        GOpMap.insert(",", ',');
+        GOpMap.insert("#", '#');
+        GOpMap.insert("!", '!');
+        GOpMap.insert("->", MEMBER_REF);
+        GOpMap.insert("++", PLUS_PLUS);
+        GOpMap.insert("--", MINUS_MINUS);
+        GOpMap.insert("<<", LSHIFT);
+        GOpMap.insert(">>", RSHIFT);
+        GOpMap.insert("<=", LE);
+        GOpMap.insert(">=", GE);
+        GOpMap.insert("==", EQ);
+        GOpMap.insert("!=", NE);
+        GOpMap.insert("&&", AND_AND);
+        GOpMap.insert("*=", MULT_ASSIGN);
+        GOpMap.insert("/=", DIV_ASSIGN);
+        GOpMap.insert("%=", MOD_ASSIGN);
+        GOpMap.insert("+=", PLUS_ASSIGN);
+        GOpMap.insert("-=", MINUS_ASSIGN);
+        GOpMap.insert("<<=", LSHIFT_ASSIGN);
+        GOpMap.insert(">>=", RSHIFT_ASSIGN);
+        GOpMap.insert("&=", AND_ASSIGN);
+        GOpMap.insert("^=", XOR_ASSIGN);
+        GOpMap.insert("|=", OR_ASSIGN);
+        GOpMap.insert("##", HASH_HASH);
+        GOpMap.insert("<:", '[');
+        GOpMap.insert(":>", ']');
+        GOpMap.insert("<%", '{');
+        GOpMap.insert("%>", '}');
+        GOpMap.insert("%:", '#');
+        GOpMap.insert("%:%:", HASH_HASH);
+        GOpMap.insert("...", DOT_DOT_DOT);
     }
-    if (!opMap.contains(str)) {
+    if (!GOpMap.contains(str)) {
         qFatal("Unknown punct: %s", str.toAscii().constData());
         return 0;
     }
-    return new ASTPPToken(opMap.value(str), str);
+    return new ASTPPToken(GOpMap.value(str), str);
 }
 
 ASTNode *CreateOp(char ch)

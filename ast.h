@@ -16,6 +16,7 @@ class ASTPPToken;
 class ASTPPTokens;
 class ASTTextLine;
 
+extern QMap<QString, int> GOpMap;
 ASTNode *CreateGroup(ASTNode *groupPart);
 ASTNode *CreateIfExpr(ASTConstantExpr *expr);
 ASTNode *CreateIfdefExpr(ASTPPToken *id);
