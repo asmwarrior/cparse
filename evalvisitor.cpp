@@ -13,27 +13,34 @@ class EvalVisitor::Private
 {
 public:
     Private(EvalVisitor *qq) : q(qq) {}
-    void macroExpand(const QSet<QString> &blacklist,
-                     QSet<QString> &expandedMacros,
-                     const QList<ASTPPToken *> &tokens, QList<ASTPPToken *> &expandedTokens);
-    void objMacroExpand(const QSet<QString> &blacklist,
-                        QSet<QString> &expandedMacros,
+    void macroExpand(const QList<QSet<QString> > &setList,
+                     QList<QSet<QString> > &exSetList,
+                     const QList<ASTPPToken *> &tokens, QList<ASTPPToken *> &exTokens);
+    void objMacroExpand(QListIterator<QSet<QString> > &sItor,
+                        QList<QSet<QString> > &exSetList,
                         QListIterator<ASTPPToken *> &inItor,
-                        QList<ASTPPToken *> &expandedTokens);
-    void funcMacroExpand(const QSet<QString> &blacklist,
-                         QSet<QString> &expandedMacros,
+                        QList<ASTPPToken *> &exTokens);
+    void funcMacroExpand(QListIterator<QSet<QString> > &sItor,
+                         QList<QSet<QString> > &exSetList,
                          QListIterator<ASTPPToken *> &inItor,
-                         QList<ASTPPToken *> &expandedTokens);
-    bool canMacroExpand(ASTPPToken *tok) const;
+                         QList<ASTPPToken *> &exTokens);
+    bool canMacroExpand(QListIterator<ASTPPToken *> &i) const;
     bool isObjMacro(ASTPPToken *tok) const;
     bool isFuncMacro(ASTPPToken *tok) const;
     ASTPPToken *concateToken(ASTPPToken *t1, ASTPPToken *t2);
-    QList<ASTPPToken*> filterHashHash(const QList<ASTPPToken*> &inTokens);
-    QList<ASTPPToken*> filterPlaceMarker(const QList<ASTPPToken*> &inTokens);
-    QList<ASTPPToken*> filterHash(const QMap<QString, QList<ASTPPToken*> > &argMap,
-                                  const QList<ASTPPToken *> &inTokens);
-    QList<ASTPPToken*> filterParam(const QMap<QString, QList<ASTPPToken*> > &exArgMap,
-                                   const QList<ASTPPToken *> &inTokens);
+    void filterHashHash(const QSet<QString> &mySet, QList<ASTPPToken*> &tokens,
+                        QList<QSet<QString> > &setList);
+    void filterPlaceMarker(const QSet<QString> &mySet, QList<ASTPPToken*> &tokens,
+                           QList<QSet<QString> > &setList);
+    void filterHash(const QMap<QString, QList<ASTPPToken*> > &argMap,
+                    const QSet<QString> &mySet,
+                    QList<ASTPPToken *> &tokens,
+                    QList<QSet<QString> > &setList);
+    void filterParam(const QMap<QString, QList<ASTPPToken*> > &exArgMap,
+                     const QMap<QString, QList<QSet<QString> > > &exArgSetMap,
+                     const QSet<QString> &mySet,
+                     QList<ASTPPToken *> &tokens,
+                     QList<QSet<QString> > &setList);
     EvalVisitor *q;
     QList<ASTPPToken*> ppTokens;
 };
@@ -63,8 +70,10 @@ void EvalVisitor::visitTextGroup(ASTNode *node)
 {
     ASTTextGroup *tg = static_cast<ASTTextGroup*>(node);
     QList<ASTPPToken*> outTokens;
-    QSet<QString> eset;
-    d->macroExpand(QSet<QString>(), eset, tg->tokenList(),
+    QList<QSet<QString> > inSL, outSL;
+    for (int i = 0; i < tg->tokenList().size(); i++)
+        inSL << QSet<QString>();
+    d->macroExpand(inSL, outSL, tg->tokenList(),
                    outTokens);
     foreach (ASTPPToken *tok, outTokens)
         printf("%s ", tok->spellName().toUtf8().constData());
@@ -104,103 +113,124 @@ EvalVisitor::PPTokenList EvalVisitor::ppTokens() const
     return d->ppTokens;
 }
 
-void EvalVisitor::Private::macroExpand(const QSet<QString> &blacklist,
-    QSet<QString> &expandedMacros,
+void EvalVisitor::Private::macroExpand(const QList<QSet<QString> > &setList,
+    QList<QSet<QString> > &exSetList,
     const QList<ASTPPToken *> &tokens,
-    QList<ASTPPToken *> &expandedTokens)
+    QList<ASTPPToken *> &exTokens)
 {
     QList<ASTPPToken*> inTokens, outTokens, tempTokens;
     QListIterator<ASTPPToken*> itor(inTokens);
-    QSet<QString> bl;
-    ASTPPToken *tok;
+    QListIterator<QSet<QString> > sitor(setList);
+    QList<QSet<QString> > inSL, outSL, tempSL;
     bool redo;
 
     inTokens = tokens;
     outTokens.clear();
-    bl = blacklist;
+    inSL = setList;
+    outSL.clear();
 retry:
-    tempTokens.clear();
     itor = inTokens;
+    sitor = inSL;
     redo = false;
     while (itor.hasNext()) {
-        tok = itor.peekNext();
-        if (!canMacroExpand(tok))
+        if (!canMacroExpand(itor)) {
             outTokens << itor.next();
-        else if (bl.contains(tok->spellName()))
+            outSL << sitor.next();
+        } else if (sitor.peekNext().contains(itor.peekNext()->spellName())) {
             outTokens << itor.next();
-        else {
+            outSL << sitor.next();
+        } else {
             redo = true;
-            if (isObjMacro(tok))
-                objMacroExpand(bl, expandedMacros, itor, tempTokens);
-            else if (isFuncMacro(tok))
-                funcMacroExpand(bl, expandedMacros, itor, tempTokens);
+            tempTokens.clear();
+            tempSL.clear();
+            if (isObjMacro(itor.peekNext()))
+                objMacroExpand(sitor, tempSL, itor, tempTokens);
+            else if (isFuncMacro(itor.peekNext()))
+                funcMacroExpand(sitor, tempSL, itor, tempTokens);
 
             outTokens << tempTokens;
+            outSL << tempSL;
         }
     }
     if (redo) {
         inTokens = outTokens;
         outTokens.clear();
-        bl.unite(expandedMacros);
+        inSL = outSL;
+        outSL.clear();
         goto retry;
     }
-    expandedTokens = outTokens;
+    exTokens = outTokens;
+    exSetList = outSL;
 }
 
-void EvalVisitor::Private::objMacroExpand(const QSet<QString> &blacklist,
-    QSet<QString> &expandedMacros,
+void EvalVisitor::Private::objMacroExpand(QListIterator<QSet<QString> > &sItor,
+    QList<QSet<QString> > &exSetList,
     QListIterator<ASTPPToken *> &inItor,
-    QList<ASTPPToken *> &expandedTokens)
+    QList<ASTPPToken *> &exTokens)
 {
-    QList<ASTPPToken*> tokens, outTokens;
-    QSet<QString> newbl = blacklist;
+    QList<ASTPPToken*> tokens;
+    QList<QSet<QString> > sl;
+    QSet<QString> mySet;
     ASTPPToken *token;
     ASTDefine *def;
-    expandedTokens.clear();
+    exTokens.clear();
+    exSetList.clear();
     token = inItor.next();
+    mySet = sItor.next();
     def = static_cast<ASTDefine*>(q->context()->symtab.value(token->spellName()));
-    newbl.insert(def->id()->spellName());
-    expandedMacros.insert(def->id()->spellName());
+    mySet.insert(def->id()->spellName());
     if (!def->body())
         return;
-    tokens = filterHashHash(def->body()->tokenList());
-    macroExpand(newbl, expandedMacros, tokens, expandedTokens);
+    tokens = def->body()->tokenList();
+    sl.clear();
+    for (int i = 0; i < tokens.size(); i++)
+        sl << mySet;
+    filterHashHash(mySet, tokens, sl);
+    macroExpand(sl, exSetList, tokens, exTokens);
 }
 
-void EvalVisitor::Private::funcMacroExpand(const QSet<QString> &blacklist,
-    QSet<QString> &expandedMacros,
+void EvalVisitor::Private::funcMacroExpand(QListIterator<QSet<QString> > &sItor,
+    QList<QSet<QString> > &exSetList,
     QListIterator<ASTPPToken *> &inItor,
-    QList<ASTPPToken *> &expandedTokens)
+    QList<ASTPPToken *> &exTokens)
 {
-    QList<ASTPPToken*> tokens, argTokens, expandedArgTokens;
-    QSet<QString> newbl = blacklist;
+    QList<ASTPPToken*> tokens, argTokens, exArgTokens;
+    QList<QSet<QString> > sl, argSetList, exArgSetList;
+    QSet<QString> mySet;
     ASTPPToken *token;
     ASTDefine *def;
     int i, brackets;
     QString param;
-    QMap<QString, QList<ASTPPToken *> > argMap, expandedArgMap;
-    QSet<QString> argExpandedMacros;
-    expandedTokens.clear();
+    QMap<QString, QList<ASTPPToken *> > argMap, exArgMap;
+    QMap<QString, QList<QSet<QString> > > argSetMap, exArgSetMap;
+    exTokens.clear();
+    exSetList.clear();
     token = inItor.next();
+    mySet = sItor.next();
     def = static_cast<ASTDefine*>(q->context()->symtab.value(token->spellName()));
     if (!inItor.hasNext() || (inItor.peekNext()->ppTokenType()!='(')) {
         //qWarning() << "Expect '(' to begin macro's argument list.";
-        expandedTokens << token;
+        exTokens << token;
+        exSetList << mySet;
         return;
     }
+    mySet.insert(def->id()->spellName());
     inItor.next();
-
+    sItor.next();
     i = 0;
     while (inItor.hasNext() && (inItor.peekNext()->ppTokenType() != ')')) {
         argTokens.clear();
+        argSetList.clear();
         if (i < def->args()->size()) {
             while (inItor.hasNext() && (inItor.peekNext()->ppTokenType() != ',')
                    && (inItor.peekNext()->ppTokenType() != ')')) {
                 argTokens << inItor.next();
+                argSetList << sItor.next();
                 if (inItor.peekPrevious()->ppTokenType() == '(') {
                     brackets = 1;
                     while (inItor.hasNext() && brackets) {
                         argTokens << inItor.next();
+                        argSetList << sItor.next();
                         if (inItor.peekPrevious()->ppTokenType() == '(')
                             brackets++;
                         else if (inItor.peekPrevious()->ppTokenType() == ')')
@@ -210,16 +240,20 @@ void EvalVisitor::Private::funcMacroExpand(const QSet<QString> &blacklist,
             }
             param = static_cast<ASTPPToken*>(def->args()->nodeList().at(i))->spellName();
             i++;
-            if (inItor.hasNext() && (inItor.peekNext()->ppTokenType() == ','))
+            if (inItor.hasNext() && (inItor.peekNext()->ppTokenType() == ',')) {
                 inItor.next();  // skip ','
+                sItor.next();
+            }
         } else if ((i == def->args()->size()) && def->isVarArgs()) {
             // Variable Args '...'
             while (inItor.hasNext() && (inItor.peekNext()->ppTokenType() != ')')) {
                 argTokens << inItor.next();
+                argSetList << sItor.next();
                 if (inItor.peekPrevious()->ppTokenType() == '(') {
                     brackets = 1;
                     while (inItor.hasNext() && brackets) {
                         argTokens << inItor.next();
+                        argSetList << sItor.next();
                         if (inItor.peekPrevious()->ppTokenType() == '(')
                             brackets++;
                         else if (inItor.peekPrevious()->ppTokenType() == '(')
@@ -230,62 +264,74 @@ void EvalVisitor::Private::funcMacroExpand(const QSet<QString> &blacklist,
             param = "__VA_ARGS__";
         } else {
             qWarning() << "Too much macro arguments";
-            expandedTokens.clear();
+            exTokens.clear();
+            exSetList.clear();
             return;
         }
-        if (argTokens.empty())
+        if (argTokens.empty()) {
             argTokens << static_cast<ASTPPToken*>(CreatePlaceMarker());
+            argSetList << mySet;
+        }
         argMap.insert(param, argTokens);
-        argExpandedMacros.clear();
-        macroExpand(QSet<QString>(), argExpandedMacros, argTokens, expandedArgTokens);
-        //foreach (QString s, argExpandedMacros)
-        qDebug() << "arg expanded:" << argExpandedMacros;
-
-        expandedMacros.unite(argExpandedMacros);
-        //macroExpand(blacklist, argExpandedMacros, argTokens, expandedArgTokens);
-        expandedArgMap.insert(param, expandedArgTokens);
+        argSetMap.insert(param, argSetList);
+        macroExpand(argSetList, exArgSetList, argTokens, exArgTokens);
+        exArgMap.insert(param, exArgTokens);
+        exArgSetMap.insert(param, exArgSetList);
     }
     if (!inItor.hasNext() || (inItor.peekNext()->ppTokenType()!=')')) {
         qWarning() << "Expect ')' to close macro's argument list.";
         return;
     }
-    inItor.next();
+    inItor.next(); // skip ')'
+    sItor.next();
 
     QList<ASTPPToken *> emptyArg;
+    QList<QSet<QString> > emptyArgSet;
     emptyArg << static_cast<ASTPPToken*>(CreatePlaceMarker());
+    emptyArgSet << mySet;
     foreach (ASTPPToken *t, def->args()->tokenList())
         if (!argMap.contains(t->spellName())) {
             argMap.insert(t->spellName(), emptyArg);
-            argMap.insert(t->spellName(), emptyArg);
+            argSetMap.insert(t->spellName(), emptyArgSet);
+            exArgMap.insert(t->spellName(), emptyArg);
+            exArgSetMap.insert(t->spellName(), emptyArgSet);
         }
     if (def->isVarArgs() && !argMap.contains("__VA_ARGS__")) {
         argMap.insert("__VA_ARGS__", emptyArg);
-        argMap.insert("__VA_ARGS__", emptyArg);
+        argSetMap.insert("__VA_ARGS__", emptyArgSet);
+        exArgMap.insert("__VA_ARGS__", emptyArg);
+        exArgSetMap.insert("__VA_ARGS__", emptyArgSet);
     }
 
-    newbl.insert(def->id()->spellName());
-    expandedMacros.insert(def->id()->spellName());
     if (!def->body())
         return;
     tokens = def->body()->tokenList();
-    tokens = filterHash(argMap, tokens);
-    tokens = filterParam(expandedArgMap, tokens);
-    tokens = filterHashHash(tokens);
-    tokens = filterPlaceMarker(tokens);
-    qDeleteAll(emptyArg);
-    qDebug() << "macro func blacklist" << newbl;
-    qDebug() << "macro expanded" << expandedMacros;
-    macroExpand(newbl, expandedMacros, tokens, expandedTokens);
+    sl.clear();
+    for (int i = 0; i < tokens.size(); i++)
+        sl << mySet;
+    filterHash(argMap, mySet, tokens, sl);
+    filterParam(exArgMap, exArgSetMap, mySet, tokens, sl);
+    filterHashHash(mySet, tokens, sl);
+    filterPlaceMarker(mySet, tokens, sl);
+    macroExpand(sl, exSetList, tokens, exTokens);
 }
 
-bool EvalVisitor::Private::canMacroExpand(ASTPPToken *tok) const
+bool EvalVisitor::Private::canMacroExpand(QListIterator<ASTPPToken *> &i) const
 {
     ASTNode *node;
+    ASTPPToken *tok;
+    tok = i.next();
     if (tok->ppTokenType() == ID) {
         node = q->context()->symtab.value(tok->spellName());
         if (node && (node->type() == ASTNode::Define))
-            return true;
+            if (isObjMacro(tok)
+                    || (isFuncMacro(tok) && i.hasNext()
+                        && static_cast<ASTPPToken*>(i.peekNext())->ppTokenType() == '(')) {
+                i.previous();
+                return true;
+            }
     }
+    i.previous();
     return false;
 }
 
@@ -324,102 +370,129 @@ ASTPPToken *EvalVisitor::Private::concateToken(ASTPPToken *t1, ASTPPToken *t2)
     return static_cast<ASTPPToken*>(node);
 }
 
-QList<ASTPPToken *> EvalVisitor::Private::filterHashHash(const QList<ASTPPToken*> &inTokens)
+void EvalVisitor::Private::filterHashHash(
+        const QSet<QString> &mySet,
+        QList<ASTPPToken *> &tokens,
+        QList<QSet<QString> > &setList)
 {
     ASTPPToken *t1, *t2;
-    QList<ASTPPToken*> tokens;
-    tokens = inTokens;
     QMutableListIterator<ASTPPToken *> i(tokens);
+    QMutableListIterator<QSet<QString> > si(setList);
     if (tokens.isEmpty())
-        return tokens;
+        return;
 
     if ((tokens.front()->ppTokenType() == HASH_HASH)
             || (tokens.last()->ppTokenType() == HASH_HASH)) {
         qWarning() << "Macro's replacement list can't start or end with ##";
         tokens.clear();
-        return tokens;
+        setList.clear();
+        return;
     }
     while (i.hasNext()) {
+
         if (i.peekNext()->ppTokenType() == HASH_HASH) {
             t1 = i.peekPrevious();
             i.remove();
+            si.remove();
             i.next();
+            si.next();
             i.remove();
+            si.remove();
             t2 = i.next();
             i.remove();
+            si.remove();
             i.insert(concateToken(t1, t2));
+            si.insert(mySet);
         } else {
             i.next();
+            si.next();
         }
     }
-    return tokens;
 }
 
-QList<ASTPPToken *> EvalVisitor::Private::filterPlaceMarker(
-        const QList<ASTPPToken*> &inTokens)
+void EvalVisitor::Private::filterPlaceMarker(
+        const QSet<QString> &mySet,
+        QList<ASTPPToken *> &tokens,
+        QList<QSet<QString> > &setList)
 {
-    QList<ASTPPToken*> tokens;
-    tokens = inTokens;
+    Q_UNUSED(mySet);
     QMutableListIterator<ASTPPToken *> i(tokens);
-    while (i.hasNext())
-        if (i.next()->ppTokenType() == PLACE_MARKER)
-            i.remove();
-    return tokens;
-}
-
-QList<ASTPPToken *> EvalVisitor::Private::filterHash(
-        const QMap<QString, QList<ASTPPToken *> > &argMap,
-        const QList<ASTPPToken *> &inTokens)
-{
-    QList<ASTPPToken*> tokens;
-    tokens = inTokens;
-    QMutableListIterator<ASTPPToken *> i(tokens);
-    QString param;
-    QString s;
+    QMutableListIterator<QSet<QString> > si(setList);
     while (i.hasNext()) {
-        if (i.next()->ppTokenType() == '#') {
+        i.next();
+        si.next();
+        if (i.peekPrevious()->ppTokenType() == PLACE_MARKER) {
+            i.remove();
+            si.remove();
+        }
+    }
+}
+
+void EvalVisitor::Private::filterHash(
+        const QMap<QString, QList<ASTPPToken *> > &argMap,
+        const QSet<QString> &mySet,
+        QList<ASTPPToken *> &tokens,
+        QList<QSet<QString> > &setList)
+{
+    QMutableListIterator<ASTPPToken *> i(tokens);
+    QMutableListIterator<QSet<QString> > si(setList);
+    QString param;
+    QString str;
+    while (i.hasNext()) {
+        i.next();
+        si.next();
+        if (i.peekPrevious()->ppTokenType() == '#') {
             if (i.hasNext() && (i.peekNext()->ppTokenType() == ID)
                     && argMap.contains(i.peekNext()->spellName())) {
                 i.remove();
+                si.remove();
                 param = i.peekNext()->spellName();
                 i.next();
+                si.next();
                 i.remove();
-                s.clear();
+                si.remove();
+                str.clear();
                 foreach (ASTPPToken *t, argMap.value(param))
-                    s += t->spellName() + " ";
-                if (s.endsWith(" "))
-                    s.chop(1);
-                s = EscapeSequence::Escape(s );
-                s.prepend('"');
-                s.append('"');
-                i.insert(static_cast<ASTPPToken*>(CreateStringLiteral(s)));
+                    str += t->spellName() + " ";
+                if (str.endsWith(" "))
+                    str.chop(1);
+                str = EscapeSequence::Escape(str );
+                str.prepend('"');
+                str.append('"');
+                i.insert(static_cast<ASTPPToken*>(CreateStringLiteral(str)));
+                si.insert(mySet);
             } else {
                 tokens.clear();
+                setList.clear();
                 qWarning() << "Expect macro parameter name after '#'";
                 break;
             }
         }
     }
-    return tokens;
 }
 
-QList<ASTPPToken *> EvalVisitor::Private::filterParam(
+void EvalVisitor::Private::filterParam(
         const QMap<QString, QList<ASTPPToken *> > &exArgMap,
-        const QList<ASTPPToken *> &inTokens)
+        const QMap<QString, QList<QSet<QString> > > &exArgSetMap,
+        const QSet<QString> &mySet,
+        QList<ASTPPToken *> &tokens,
+        QList<QSet<QString> > &setList)
 {
-    QList<ASTPPToken*> tokens;
-    tokens = inTokens;
     QMutableListIterator<ASTPPToken *> i(tokens);
+    QMutableListIterator<QSet<QString> > si(setList);
     QString param;
     while (i.hasNext()) {
-        if ((i.next()->ppTokenType() == ID)
+        i.next();
+        si.next();
+        if ((i.peekPrevious()->ppTokenType() == ID)
                 && exArgMap.contains(i.peekPrevious()->spellName())) {
-
             param = i.peekPrevious()->spellName();
             i.remove();
+            si.remove();
             foreach (ASTPPToken *t, exArgMap.value(param))
                 i.insert(t);
+            foreach (QSet<QString> sl, exArgSetMap.value(param))
+                si.insert(sl.unite(mySet));
         }
     }
-    return tokens;
 }
