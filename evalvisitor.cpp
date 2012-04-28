@@ -150,9 +150,14 @@ retry:
 
             outTokens << tempTokens;
             outSL << tempSL;
+            break;
         }
     }
     if (redo) {
+        while (itor.hasNext())
+            outTokens << itor.next();
+        while (sitor.hasNext())
+            outSL << sitor.next();
         inTokens = outTokens;
         outTokens.clear();
         inSL = outSL;
@@ -186,7 +191,9 @@ void EvalVisitor::Private::objMacroExpand(QListIterator<QSet<QString> > &sItor,
     for (int i = 0; i < tokens.size(); i++)
         sl << mySet;
     filterHashHash(mySet, tokens, sl);
-    macroExpand(sl, exSetList, tokens, exTokens);
+    //macroExpand(sl, exSetList, tokens, exTokens);
+    exSetList = sl;
+    exTokens = tokens;
 }
 
 void EvalVisitor::Private::funcMacroExpand(QListIterator<QSet<QString> > &sItor,
@@ -313,7 +320,9 @@ void EvalVisitor::Private::funcMacroExpand(QListIterator<QSet<QString> > &sItor,
     filterParam(exArgMap, exArgSetMap, mySet, tokens, sl);
     filterHashHash(mySet, tokens, sl);
     filterPlaceMarker(mySet, tokens, sl);
-    macroExpand(sl, exSetList, tokens, exTokens);
+    //macroExpand(sl, exSetList, tokens, exTokens);
+    exSetList = sl;
+    exTokens = tokens;
 }
 
 bool EvalVisitor::Private::canMacroExpand(QListIterator<ASTPPToken *> &i) const
