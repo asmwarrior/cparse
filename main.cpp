@@ -9,7 +9,7 @@
 extern int combinedebug;
 int main(int argc, char *argv[])
 {
-    combinedebug = 1;
+    combinedebug = 0;
     Context ctx;
     DumpVisitor dumper(&ctx);
     EvalVisitor evaluator(&ctx);

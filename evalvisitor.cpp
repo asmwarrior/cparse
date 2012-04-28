@@ -189,6 +189,7 @@ void EvalVisitor::Private::funcMacroExpand(const QSet<QString> &blacklist,
         return;
     }
     inItor.next();
+
     i = 0;
     while (inItor.hasNext() && (inItor.peekNext()->ppTokenType() != ')')) {
         argTokens.clear();
@@ -237,6 +238,11 @@ void EvalVisitor::Private::funcMacroExpand(const QSet<QString> &blacklist,
         argMap.insert(param, argTokens);
         argExpandedMacros.clear();
         macroExpand(QSet<QString>(), argExpandedMacros, argTokens, expandedArgTokens);
+        //foreach (QString s, argExpandedMacros)
+        qDebug() << "arg expanded:" << argExpandedMacros;
+
+        expandedMacros.unite(argExpandedMacros);
+        //macroExpand(blacklist, argExpandedMacros, argTokens, expandedArgTokens);
         expandedArgMap.insert(param, expandedArgTokens);
     }
     if (!inItor.hasNext() || (inItor.peekNext()->ppTokenType()!=')')) {
@@ -244,6 +250,19 @@ void EvalVisitor::Private::funcMacroExpand(const QSet<QString> &blacklist,
         return;
     }
     inItor.next();
+
+    QList<ASTPPToken *> emptyArg;
+    emptyArg << static_cast<ASTPPToken*>(CreatePlaceMarker());
+    foreach (ASTPPToken *t, def->args()->tokenList())
+        if (!argMap.contains(t->spellName())) {
+            argMap.insert(t->spellName(), emptyArg);
+            argMap.insert(t->spellName(), emptyArg);
+        }
+    if (def->isVarArgs() && !argMap.contains("__VA_ARGS__")) {
+        argMap.insert("__VA_ARGS__", emptyArg);
+        argMap.insert("__VA_ARGS__", emptyArg);
+    }
+
     newbl.insert(def->id()->spellName());
     expandedMacros.insert(def->id()->spellName());
     if (!def->body())
@@ -253,6 +272,9 @@ void EvalVisitor::Private::funcMacroExpand(const QSet<QString> &blacklist,
     tokens = filterParam(expandedArgMap, tokens);
     tokens = filterHashHash(tokens);
     tokens = filterPlaceMarker(tokens);
+    qDeleteAll(emptyArg);
+    qDebug() << "macro func blacklist" << newbl;
+    qDebug() << "macro expanded" << expandedMacros;
     macroExpand(newbl, expandedMacros, tokens, expandedTokens);
 }
 
@@ -339,10 +361,9 @@ QList<ASTPPToken *> EvalVisitor::Private::filterPlaceMarker(
     QList<ASTPPToken*> tokens;
     tokens = inTokens;
     QMutableListIterator<ASTPPToken *> i(tokens);
-    while (i.hasNext()) {
+    while (i.hasNext())
         if (i.next()->ppTokenType() == PLACE_MARKER)
             i.remove();
-    }
     return tokens;
 }
 
