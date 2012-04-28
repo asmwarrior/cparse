@@ -92,6 +92,7 @@ void combineerror(Context *ctx, const char *);
 %token PRAGMA
 
 %token ID
+%token UNKNOWN
 %token PP_NUMBER
 %token CHAR_CONSTANT
 %token STRING_LITERAL
@@ -373,6 +374,7 @@ pp_token    : ID                {$$=$1;}
             | "|="              {$$=$1;}
             | ','               {$$=$1;}
             | "##"              {$$=$1;}
+            | UNKNOWN           {$$=$1;}
             ;
 
 %%

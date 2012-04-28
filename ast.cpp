@@ -115,8 +115,7 @@ ASTNode *CreateOp(const QString &str)
         GOpMap.insert("...", DOT_DOT_DOT);
     }
     if (!GOpMap.contains(str)) {
-        qFatal("Unknown punct: %s", str.toAscii().constData());
-        return 0;
+        return new ASTPPToken(UNKNOWN, str);
     }
     return new ASTPPToken(GOpMap.value(str), str);
 }

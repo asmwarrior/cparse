@@ -408,6 +408,7 @@ void EvalVisitor::Private::filterHashHash(
             i.remove();
             si.remove();
             t2 = i.next();
+            si.next();
             i.remove();
             si.remove();
             i.insert(concateToken(t1, t2));
@@ -461,11 +462,15 @@ void EvalVisitor::Private::filterHash(
                 i.remove();
                 si.remove();
                 str.clear();
-                foreach (ASTPPToken *t, argMap.value(param))
-                    str += t->spellName() + " ";
+                foreach (ASTPPToken *t, argMap.value(param)) {
+                    if (t->isStringLiteral())
+                        str += EscapeSequence::Escape(t->spellName());
+                    else
+                        str += t->spellName();
+                    str += " ";
+                }
                 if (str.endsWith(" "))
                     str.chop(1);
-                str = EscapeSequence::Escape(str );
                 str.prepend('"');
                 str.append('"');
                 i.insert(static_cast<ASTPPToken*>(CreateStringLiteral(str)));

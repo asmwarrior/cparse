@@ -2,6 +2,7 @@
 #include "ast.h"
 #define YY_DECL int pplex(ASTNode *&pplval)
 #include "combine_yacc.h"
+#include <ctype.h>
 
 static void comment();
 
@@ -49,7 +50,7 @@ newline             \n
 %%
 <*>^\/\*                        {comment();BEGIN(XLINE_START);}
 <*>\/\*                         {comment();}
-<*>\/\/.*                       
+<*>\/\/.*\n 			
 
 <*>^.                           {yyless(0);BEGIN(XLINE_START);}
 <XLINE_START>#                  {BEGIN(XCONTROL_LINE);return LINESTART_HASH;}
@@ -88,15 +89,17 @@ newline             \n
     pplval = CreateStringLiteral(yytext);
     return STRING_LITERAL;
                     }
-<*>{newline}        {return NEWLINE;}
+<*>{newline}        {BEGIN(0);return NEWLINE;}
 <*>{ws}
 <*>{punct}          {
     pplval = CreateOp(yytext);
     return static_cast<ASTPPToken*>(pplval)->ppTokenType();
 }
 <*>.                {
-    pplval = CreateOp(yytext[0]);
-    return static_cast<ASTPPToken*>(pplval)->ppTokenType();
+    if (isgraph(yytext[0])) {
+        pplval = CreateOp(yytext[0]);
+        return static_cast<ASTPPToken*>(pplval)->ppTokenType();
+    }
 }
 
 %%
