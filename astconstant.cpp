@@ -159,6 +159,141 @@ bool ASTInteger::isZero() const
     return false;
 }
 
+void ASTInteger::promoteTo(ASTInteger::IntegerType itype)
+{
+    if (itype == d->integerType)
+        return;
+    switch (itype) {
+    case ASTInteger::Int:
+        switch (d->integerType) {
+        case ASTInteger::Int:
+            // Nothing to do
+            break;
+        case ASTInteger::LongInt:
+            d->value.aInt = (int)d->value.aLInt;
+            break;
+        case ASTInteger::LongLongInt:
+            d->value.aInt = (int)d->value.aLLInt;
+            break;
+        case ASTInteger::UnsignedInt:
+            d->value.aInt = (int)d->value.aUInt;
+            break;
+        case ASTInteger::UnsignedLongInt:
+            d->value.aInt = (int)d->value.aULInt;
+            break;
+        case ASTInteger::UnsignedLongLongInt:
+            d->value.aInt = (int)d->value.aULLInt;
+            break;
+        }
+    case ASTInteger::LongInt:
+        switch (d->integerType) {
+        case ASTInteger::Int:
+            d->value.aLInt = (long int)d->value.aInt;
+            break;
+        case ASTInteger::LongInt:
+            // nothing to do
+            break;
+        case ASTInteger::LongLongInt:
+            d->value.aLInt = (long int)d->value.aLLInt;
+            break;
+        case ASTInteger::UnsignedInt:
+            d->value.aLInt = (long int)d->value.aUInt;
+            break;
+        case ASTInteger::UnsignedLongInt:
+            d->value.aLInt = (long int)d->value.aULInt;
+            break;
+        case ASTInteger::UnsignedLongLongInt:
+            d->value.aLInt = (long int)d->value.aULLInt;
+            break;
+        }
+    case ASTInteger::LongLongInt:
+        switch (d->integerType) {
+        case ASTInteger::Int:
+            d->value.aLLInt = (long long int)d->value.aInt;
+            break;
+        case ASTInteger::LongInt:
+            d->value.aLLInt = (long long int)d->value.aLInt;
+            break;
+        case ASTInteger::LongLongInt:
+            // nothing to do
+            break;
+        case ASTInteger::UnsignedInt:
+            d->value.aLLInt = (long long int)d->value.aUInt;
+            break;
+        case ASTInteger::UnsignedLongInt:
+            d->value.aLLInt = (long long int)d->value.aULInt;
+            break;
+        case ASTInteger::UnsignedLongLongInt:
+            d->value.aLLInt = (long long int)d->value.aULLInt;
+            break;
+        }
+    case ASTInteger::UnsignedInt:
+        switch (d->integerType) {
+        case ASTInteger::Int:
+            d->value.aUInt = (unsigned int)d->value.aInt;
+            break;
+        case ASTInteger::LongInt:
+            d->value.aUInt = (unsigned int)d->value.aLInt;
+            break;
+        case ASTInteger::LongLongInt:
+            d->value.aUInt = (unsigned int)d->value.aLLInt;
+            break;
+        case ASTInteger::UnsignedInt:
+            // nothing to do
+            break;
+        case ASTInteger::UnsignedLongInt:
+            d->value.aUInt = (unsigned int)d->value.aULInt;
+            break;
+        case ASTInteger::UnsignedLongLongInt:
+            d->value.aUInt = (unsigned int)d->value.aULLInt;
+            break;
+        }
+    case ASTInteger::UnsignedLongInt:
+        switch (d->integerType) {
+        case ASTInteger::Int:
+            d->value.aULInt = (unsigned long int)d->value.aInt;
+            break;
+        case ASTInteger::LongInt:
+            d->value.aULInt = (unsigned long int)d->value.aLInt;
+            break;
+        case ASTInteger::LongLongInt:
+            d->value.aULInt = (unsigned long int)d->value.aLLInt;
+            break;
+        case ASTInteger::UnsignedInt:
+            d->value.aULInt = (unsigned long int)d->value.aUInt;
+            break;
+        case ASTInteger::UnsignedLongInt:
+            // nothing to do
+            break;
+        case ASTInteger::UnsignedLongLongInt:
+            d->value.aULInt = (unsigned long int)d->value.aULLInt;
+            break;
+        }
+    case ASTInteger::UnsignedLongLongInt:
+        switch (d->integerType) {
+        case ASTInteger::Int:
+            d->value.aULLInt = (unsigned long long int)d->value.aInt;
+            break;
+        case ASTInteger::LongInt:
+            d->value.aULLInt = (unsigned long long int)d->value.aLInt;
+            break;
+        case ASTInteger::LongLongInt:
+            d->value.aULLInt = (unsigned long long int)d->value.aLLInt;
+            break;
+        case ASTInteger::UnsignedInt:
+            d->value.aULLInt = (unsigned long long int)d->value.aUInt;
+            break;
+        case ASTInteger::UnsignedLongInt:
+            d->value.aULLInt = (unsigned long long int)d->value.aULInt;
+            break;
+        case ASTInteger::UnsignedLongLongInt:
+            // nothing to do
+            break;
+        }
+    }
+    d->integerType = itype;
+}
+
 class ASTChar::Private
 {
 public:

@@ -49,5 +49,3 @@ HEADERS += \
     pplexer.h \
     pptokenlistlexer.h \
     eval.h
-
-

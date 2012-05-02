@@ -52,6 +52,7 @@ public:
     unsigned long asULInt() const;
     unsigned long long asULLInt() const;
     bool isZero() const;
+    void promoteTo(ASTInteger::IntegerType itype);
 private:
     class Private;
     Private *d;

@@ -396,8 +396,57 @@ pp_token    : ID                {$$=$1;}
             | "##"              {$$=$1;}
             ;
 
-pp_expr     : NUM   {$$ = $1;}
+pp_expr     :  pp_cond_expr {$$ = $1;}
             ;
+pp_cond_expr: pp_rel_or_expr {$$ = $1;}
+            | pp_rel_or_expr ':' pp_expr ':' pp_cond_expr
+            ;
+pp_rel_or_expr  : pp_rel_and_expr {$$ = $1;}
+                | pp_rel_or_expr "||" pp_rel_and_expr
+                ;
+pp_rel_and_expr : pp_or_expr {$$ = $1;}
+                | pp_rel_and_expr "&&" pp_or_expr
+                ;
+pp_or_expr      : pp_xor_expr {$$ = $1;}
+                | pp_or_expr '|' pp_xor_expr
+                ;
+pp_xor_expr     : pp_and_expr {$$ = $1;}
+                | pp_xor_expr '^' pp_and_expr
+                ;
+pp_and_expr     : pp_eq_expr {$$ = $1;}
+                | pp_and_expr '&' pp_eq_expr
+                ;
+pp_eq_expr      : pp_rel_expr {$$ = $1;}
+                | pp_eq_expr "==" pp_rel_expr
+                | pp_eq_expr "!=" pp_rel_expr
+                ;
+pp_rel_expr     : pp_shift_expr {$$ = $1;}
+                | pp_rel_expr '<' pp_shift_expr
+                | pp_rel_expr '>' pp_shift_expr
+                | pp_rel_expr "<=" pp_shift_expr
+                | pp_rel_expr ">=" pp_shift_expr
+                ;
+pp_shift_expr   : pp_add_expr {$$ = $1;}
+                | pp_shift_expr "<<" pp_add_expr
+                | pp_shift_expr ">>" pp_add_expr
+                ;
+pp_add_expr     : pp_mult_expr {$$ = $1;}
+                | pp_add_expr '+' pp_mult_expr
+                | pp_add_expr '-' pp_mult_expr
+                ;
+pp_mult_expr    : pp_unary_expr {$$ = $1;}
+                | pp_mult_expr '*' pp_unary_expr
+                | pp_mult_expr '/' pp_unary_expr
+                | pp_mult_expr '%' pp_unary_expr
+                ;
+pp_unary_expr   : pp_primary_expr {$$ = $1;}
+                | '-' pp_unary_expr
+                | '+' pp_unary_expr
+                | '~' pp_unary_expr
+                | '!' pp_unary_expr
+                ;
+pp_primary_expr : NUM {$$ = $1;}
+                ;
 %%
 
 int combinelex(Context *ctx)

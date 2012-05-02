@@ -5,7 +5,7 @@
 #include <QObject>
 
 class ASTNode;
-
+class ASTExprType;
 class ASTExpr: public ASTNode
 {
     Q_OBJECT
@@ -46,20 +46,15 @@ class ASTUnaryExpr: public ASTExpr
     Q_OBJECT
 public:
     enum UnaryOp {
-        PreInc,
-        PreDec,
-        PostInc,
-        PostDec,
         LogicalNot,
-        SizeOf,
-        Defined,
-        Hash,
-        FuncInvoke
+        AriReverse
     };
     ASTUnaryExpr(UnaryOp op, ASTExpr *expr);
     ~ASTUnaryExpr();
     UnaryOp op() const;
     ASTExpr *expr() const;
+    ASTExprType *castType() const;
+    void setCastType(ASTExprType *t);
 private:
     class Private;
     Private *d;
@@ -87,7 +82,6 @@ public:
         AriDiv,
         AriMod,
         Comma,
-        HashHash
     };
     ASTBinaryExpr(BinaryOp op, ASTExpr *le, ASTExpr *re);
     ~ASTBinaryExpr();

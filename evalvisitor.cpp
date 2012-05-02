@@ -46,6 +46,7 @@ public:
                      const QSet<QString> &mySet,
                      QList<ASTPPToken *> &tokens,
                      QList<QSet<QString> > &setList);
+    void filterDefined(QList<ASTPPToken *> &tokens);
     EvalVisitor *q;
     QList<ASTPPToken*> ppTokens;
 };
@@ -102,7 +103,14 @@ void EvalVisitor::visitIfGroup(ASTNode *node)
     Context ctx;
     PPTokenListLexer lexer;
     ASTInteger *integer;
-    lexer.setPPTokenList(ifg->expr()->tokenList());
+    QList<ASTPPToken*> inTokens, outTokens;
+    QList<QSet<QString> > inSL, outSL;
+    inTokens = ifg->expr()->tokenList();
+    d->filterDefined(inTokens);
+    for (int i = 0; i < inTokens.size(); i++)
+        inSL << QSet<QString>();
+    d->macroExpand(inSL, outSL, inTokens, outTokens);
+    lexer.setPPTokenList(outTokens);
     ctx.langDialect = Context::PPExpression;
     ctx.symtab = context()->symtab;
     parse(&ctx, &lexer);
@@ -530,6 +538,52 @@ void EvalVisitor::Private::filterParam(
                 i.insert(t);
             foreach (QSet<QString> sl, exArgSetMap.value(param))
                 si.insert(sl.unite(mySet));
+        }
+    }
+}
+
+void EvalVisitor::Private::filterDefined(QList<ASTPPToken *> &tokens)
+{
+    QMutableListIterator<ASTPPToken *> i(tokens);
+    bool macroDefined;
+    while (i.hasNext()) {
+        i.next();
+        if (i.peekPrevious()->ppTokenType() == DEFINED) {
+            macroDefined = false;
+            i.remove();
+            i.next();
+            if (i.peekPrevious()->ppTokenType() == ID) {
+                if (q->context()->symtab.contains(i.peekPrevious()->spellName()))
+                    macroDefined = true;
+                else
+                    macroDefined = false;
+            } else if (i.peekPrevious()->ppTokenType() == '(') {
+                i.remove();
+                i.next();
+                if (i.peekPrevious()->ppTokenType() == ID) {
+                    if (q->context()->symtab.contains(i.peekPrevious()->spellName()))
+                        macroDefined = true;
+                    else
+                        macroDefined = false;
+                } else {
+                    qWarning() << "Expect ID after 'defined ('";
+                    continue;
+                }
+                i.remove();
+                i.next();
+                if (i.peekPrevious()->ppTokenType() != ')') {
+                    qWarning() << "Expect ')' after 'defined ( ID'";
+                    continue;
+                } else {
+                    i.remove();
+                }
+            }
+            ASTPPToken *ppToken;
+            if (macroDefined)
+                ppToken = static_cast<ASTPPToken*>(CreatePPNumber("1"));
+            else
+                ppToken = static_cast<ASTPPToken*>(CreatePPNumber("0"));
+            i.insert(ppToken);
         }
     }
 }
