@@ -1,12 +1,12 @@
 #ifndef ASTCONSTANT_H
 #define ASTCONSTANT_H
 
-#include "ast.h"
+#include "astexpr.h"
 #include <QChar>
 #include <QObject>
 #include <QMap>
 
-class ASTConstant: public ASTNode
+class ASTConstant: public ASTPrimaryExpr
 {
     Q_OBJECT
 public:
@@ -43,6 +43,7 @@ public:
     explicit ASTInteger(unsigned long li);
     explicit ASTInteger(unsigned long long lli);
     ~ASTInteger();
+    ASTInteger(const ASTInteger &integer);
     IntegerType integerType();
     int asInt() const;
     long asLInt() const;
@@ -50,6 +51,7 @@ public:
     unsigned asUInt() const;
     unsigned long asULInt() const;
     unsigned long long asULLInt() const;
+    bool isZero() const;
 private:
     class Private;
     Private *d;

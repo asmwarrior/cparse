@@ -13,6 +13,7 @@ int main(int argc, char *argv[])
     Context ctx;
     DumpVisitor dumper(&ctx);
     EvalVisitor evaluator(&ctx);
+    ctx.langDialect = Context::PP;
     if (argc > 1)
         parseFile(&ctx, argv[1]);
     if (ctx.root) {

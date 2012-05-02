@@ -30,11 +30,11 @@ public:
     ASTPrimaryExpr::PrimaryType primaryType;
 };
 
-ASTPrimaryExpr::ASTPrimaryExpr()
+ASTPrimaryExpr::ASTPrimaryExpr(PrimaryType ptype)
     : ASTExpr(ASTExpr::PrimaryExpr),
       d(new ASTPrimaryExpr::Private)
 {
-
+    d->primaryType = ptype;
 }
 
 ASTPrimaryExpr::~ASTPrimaryExpr()

@@ -31,7 +31,9 @@ SOURCES += main.cpp \
     astconstant.cpp \
     escapeseq.cpp \
     pplexer.cpp \
-    lexer.cpp
+    lexer.cpp \
+    pptokenlistlexer.cpp \
+    eval.cpp
 
 HEADERS += \
     ast.h \
@@ -44,6 +46,8 @@ HEADERS += \
     astconstant.h \
     escapeseq.h \
     lexer.h \
-    pplexer.h
+    pplexer.h \
+    pptokenlistlexer.h \
+    eval.h
 
 

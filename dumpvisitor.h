@@ -18,9 +18,10 @@ public slots:
     void visitPragma(ASTNode *node);
     void visitIfGroup(ASTNode *node);
     void visitDefine(ASTNode *node);
+    void visitUndef(ASTNode *node);
+    void visitLine(ASTNode *node);
     void visitPPTokens(ASTNode *node);
     void visitPPToken(ASTNode *node);
-    void visitConstantExpr(ASTNode *node);
 };
 
 #endif // DUMPVISITOR_H

@@ -111,6 +111,18 @@ void DumpVisitor::visitDefine(ASTNode *node)
     printf("\n");
 }
 
+void DumpVisitor::visitUndef(ASTNode *node)
+{
+    ASTUndef *und = static_cast<ASTUndef*>(node);
+    printf("#undef %s\n", und->id()->spellName().toAscii().constData());
+}
+
+void DumpVisitor::visitLine(ASTNode *node)
+{
+    Q_UNUSED(node);
+    printf("#line ...\n");
+}
+
 void DumpVisitor::visitPPTokens(ASTNode *node)
 {
     ASTPPTokens *tokens = static_cast<ASTPPTokens *>(node);
@@ -124,12 +136,4 @@ void DumpVisitor::visitPPTokens(ASTNode *node)
 void DumpVisitor::visitPPToken(ASTNode *node)
 {
     printf("%s ", node->spellName().toAscii().constData());
-}
-
-void DumpVisitor::visitConstantExpr(ASTNode *node)
-{
-    ASTConstantExpr *expr = static_cast<ASTConstantExpr *>(node);
-    foreach (ASTNode *subexpr, expr->nodeList()) {
-        subexpr->accept(this);
-    }
 }

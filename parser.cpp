@@ -10,14 +10,19 @@ int parseString(Context *ctx, const char *str)
 {
     PPLexer pplexer;
     pplexer.setString(str);
-    ctx->lexer = &pplexer;
-    return combineparse(ctx);
+    return parse(ctx, &pplexer);
 }
 
 int parseFile(Context *ctx, const QString &fname)
 {
     PPLexer pplexer;
     pplexer.setFileName(fname);
-    ctx->lexer = &pplexer;
+    return parse(ctx, &pplexer);
+}
+
+int parse(Context *ctx, Lexer *lexer)
+{
+    ctx->lexer = lexer;
+    ctx->parseStart = true;
     return combineparse(ctx);
 }

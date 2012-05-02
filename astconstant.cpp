@@ -14,7 +14,7 @@ public:
 };
 
 ASTConstant::ASTConstant(ASTConstant::ConstantType t)
-    : ASTNode(ASTNode::Constant, "Constant"),
+    : ASTPrimaryExpr(ASTPrimaryExpr::Constant),
       d(new ASTConstant::Private)
 {
     d->constantType = t;
@@ -97,6 +97,14 @@ ASTInteger::~ASTInteger()
     delete d;
 }
 
+ASTInteger::ASTInteger(const ASTInteger &integer)
+    : ASTConstant(ASTConstant::Integer),
+      d(new ASTInteger::Private)
+{
+    d->integerType = integer.d->integerType;
+    qMemCopy(&d->value, &integer.d->value, sizeof(d->value));
+}
+
 ASTInteger::IntegerType ASTInteger::integerType()
 {
     return d->integerType;
@@ -130,6 +138,25 @@ unsigned long ASTInteger::asULInt() const
 unsigned long long ASTInteger::asULLInt() const
 {
     return d->value.aULLInt;
+}
+
+bool ASTInteger::isZero() const
+{
+    switch (d->integerType) {
+    case ASTInteger::Int:
+        return d->value.aInt == 0;
+    case ASTInteger::LongInt:
+        return d->value.aLInt == 0;
+    case ASTInteger::LongLongInt:
+        return d->value.aLLInt == 0;
+    case ASTInteger::UnsignedInt:
+        return d->value.aUInt == 0;
+    case ASTInteger::UnsignedLongInt:
+        return d->value.aULInt == 0;
+    case ASTInteger::UnsignedLongLongInt:
+        return d->value.aULLInt == 0;
+    }
+    return false;
 }
 
 class ASTChar::Private

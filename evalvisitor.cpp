@@ -1,8 +1,13 @@
 #include "evalvisitor.h"
 #include "ast.h"
+#include "astexpr.h"
+#include "astconstant.h"
 #include "astvisitor.h"
 #include "combine_yacc.h"
 #include "escapeseq.h"
+#include "pptokenlistlexer.h"
+#include "parser.h"
+#include "eval.h"
 #include <stdio.h>
 #include <QList>
 #include <QListIterator>
@@ -93,7 +98,25 @@ void EvalVisitor::visitPragma(ASTNode *node)
 
 void EvalVisitor::visitIfGroup(ASTNode *node)
 {
-    Q_UNUSED(node);
+    ASTIfGroup *ifg = static_cast<ASTIfGroup*>(node);
+    Context ctx;
+    PPTokenListLexer lexer;
+    ASTInteger *integer;
+    lexer.setPPTokenList(ifg->expr()->tokenList());
+    ctx.langDialect = Context::PPExpression;
+    ctx.symtab = context()->symtab;
+    parse(&ctx, &lexer);
+    if (ctx.root && (integer = evalExpr(static_cast<ASTExpr*>(ctx.root)))) {
+        if (!integer->isZero()) {
+            if (ifg->trueBranch())
+                visitGroup(ifg->trueBranch());
+        } else {
+            if (ifg->falseBranch())
+                visitGroup(ifg->falseBranch());
+        }
+    } else {
+        qDebug() << "Error parse #if ";
+    }
 }
 
 void EvalVisitor::visitDefine(ASTNode *node)

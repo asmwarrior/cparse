@@ -33,7 +33,7 @@ public:
         Constant,
         StringLiteral
     };
-    ASTPrimaryExpr();
+    ASTPrimaryExpr(PrimaryType ptype);
     ~ASTPrimaryExpr();
     PrimaryType primaryType() const;
 private:

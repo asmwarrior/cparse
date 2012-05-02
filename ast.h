@@ -6,7 +6,7 @@
 #include <QList>
 #include <QObject>
 
-class ASTConstantExpr;
+class ASTPPTokens;
 class ASTElifGroup;
 class ASTGroup;
 class ASTIfGroup;
@@ -18,16 +18,16 @@ class ASTTextLine;
 
 extern QMap<QString, int> GOpMap;
 ASTNode *CreateGroup(ASTNode *groupPart);
-ASTNode *CreateIfExpr(ASTConstantExpr *expr);
+ASTNode *CreateIfExpr(ASTPPTokens *expr);
 ASTNode *CreateIfdefExpr(ASTPPToken *id);
 ASTNode *CreateIfndefExpr(ASTPPToken *id);
-ASTNode *CreateIfGroup(ASTConstantExpr *expr, ASTGroup *trueBranch,
+ASTNode *CreateIfGroup(ASTPPTokens *expr, ASTGroup *trueBranch,
                        ASTGroup *falseBranch);
-ASTNode *CreateIfGroup(ASTConstantExpr *expr, ASTElifGroup *elifGroup,
+ASTNode *CreateIfGroup(ASTPPTokens *expr, ASTElifGroup *elifGroup,
                        ASTGroup *groupAfterElif, ASTGroup *elseBranch);
 ASTNode *CreateElifGroup(ASTElifGroup *elifGroup, ASTGroup *group,
-                         ASTConstantExpr *expr);
-ASTNode *CreateElifGroup(ASTGroup *group, ASTConstantExpr *expr);
+                         ASTPPTokens *expr);
+ASTNode *CreateElifGroup(ASTGroup *group, ASTPPTokens *expr);
 ASTNode *CreateOp(const QString &str);
 ASTNode *CreateOp(char ch);
 ASTNode *CreateID(const QString &str);
@@ -199,23 +199,15 @@ public:
     ~ASTPragma();
 };
 
-class ASTConstantExpr: public ASTNodeList
-{
-    Q_OBJECT
-public:
-    ASTConstantExpr();
-    ~ASTConstantExpr();
-};
-
 class ASTGroup;
 class ASTElifElement: public ASTNode
 {
     Q_OBJECT
 public:
-    ASTElifElement(ASTGroup *group, ASTConstantExpr *expr);
+    ASTElifElement(ASTGroup *group, ASTPPTokens *expr);
     ~ASTElifElement();
     ASTGroup *group() const;
-    ASTConstantExpr *expr() const;
+    ASTPPTokens *expr() const;
 private:
     class Private;
     Private *d;
@@ -235,10 +227,10 @@ class ASTIfGroup: public ASTNode
 public:
     ASTIfGroup();
     ~ASTIfGroup();
-    void setExpr(ASTConstantExpr *expr);
+    void setExpr(ASTPPTokens *expr);
     void setTrueBranch(ASTGroup *group);
     void setFalseBranch(ASTGroup *group);
-    ASTConstantExpr *expr() const;
+    ASTPPTokens *expr() const;
     ASTGroup *trueBranch() const;
     ASTGroup *falseBranch() const;
 private:

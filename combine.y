@@ -92,7 +92,6 @@ void combineerror(Context *ctx, const char *);
 %token PRAGMA
 
 %token ID
-%token UNKNOWN
 %token PP_NUMBER
 %token CHAR_CONSTANT
 %token STRING_LITERAL
@@ -101,6 +100,7 @@ void combineerror(Context *ctx, const char *);
 
 /* fake tokens introduced by lexer */
 %token ID_FUNC
+%token UNKNOWN
 
 /* fake tokens introduced by parser */
 %token GROUP
@@ -111,13 +111,21 @@ void combineerror(Context *ctx, const char *);
 %token TOKENS
 %token TEXT_LINE
 %token NODE_LIST
-%token CONSTANT_EXPR
 %token PLACE_MARKER
 
-%%
+/* language dialects */
+%token CPP_FILE
+%token CPP_EXPRESSION
 
-pp_file :group  {$$ = $1; ctx->root = $$;}
-        |       {$$ = NULL; ctx->root = $$;}
+/* fake tokens used by #if's expression */
+%token NUM
+
+%%
+top     :CPP_FILE pp_file   {$$=$2; ctx->root = $$;}
+        |CPP_EXPRESSION pp_expr     {$$=$2; ctx->root = $$;}
+        ;
+pp_file :group  {$$ = $1;}
+        |       {$$ = NULL;}
         ;
 group   :group_part {$$ = CreateGroup($1);}
         |group group_part {static_cast<ASTGroup*>($1)->appendPart($2); $$ = $1;}
@@ -129,66 +137,78 @@ group_part  :if_group {$$ = $1;}
             ;
 if_group    : ifs_line group endif_line 
 {
-    $$ = CreateIfGroup(static_cast<ASTConstantExpr*>($1),
+    $$ = CreateIfGroup(static_cast<ASTPPTokens*>($1),
             static_cast<ASTGroup*>($2),
             NULL);
 }
             | ifs_line endif_line
 {
-    $$ = CreateIfGroup(static_cast<ASTConstantExpr*>($1),
+    $$ = CreateIfGroup(static_cast<ASTPPTokens*>($1),
             NULL,
             NULL);
 }
             | ifs_line elif_group endif_line
 {
-    $$ = CreateIfGroup(static_cast<ASTConstantExpr*>($1),
+    $$ = CreateIfGroup(static_cast<ASTPPTokens*>($1),
             static_cast<ASTElifGroup*>($2),
             NULL,
             NULL);
 }
             | ifs_line elif_group group endif_line
 {
-    $$ = CreateIfGroup(static_cast<ASTConstantExpr*>($1),
+    $$ = CreateIfGroup(static_cast<ASTPPTokens*>($1),
             static_cast<ASTElifGroup*>($2),
             static_cast<ASTGroup*>($3),
             NULL);
 }
             | ifs_line else_line endif_line
 {
-    $$ = CreateIfGroup(static_cast<ASTConstantExpr*>($1),
+    $$ = CreateIfGroup(static_cast<ASTPPTokens*>($1),
             NULL,
+            NULL);
+}
+            | ifs_line group else_line endif_line
+{
+    $$ = CreateIfGroup(static_cast<ASTPPTokens*>($1),
+            static_cast<ASTGroup*>($2),
             NULL);
 }
             | ifs_line else_line group endif_line
 {
-    $$ = CreateIfGroup(static_cast<ASTConstantExpr*>($1),
+    $$ = CreateIfGroup(static_cast<ASTPPTokens*>($1),
             NULL,
             static_cast<ASTGroup*>($3));
 }
+            | ifs_line group else_line group endif_line
+{
+    $$ = CreateIfGroup(static_cast<ASTPPTokens*>($1),
+            static_cast<ASTGroup*>($2),
+            static_cast<ASTGroup*>($4));
+}
             | ifs_line elif_group else_line endif_line
 {
-    $$ = CreateIfGroup(static_cast<ASTConstantExpr*>($1),
+    $$ = CreateIfGroup(static_cast<ASTPPTokens*>($1),
             static_cast<ASTElifGroup*>($2),
             NULL,
             NULL);
 }
             | ifs_line elif_group group else_line endif_line
 {
-    $$ = CreateIfGroup(static_cast<ASTConstantExpr*>($1),
+    $$ = CreateIfGroup(static_cast<ASTPPTokens*>($1),
             static_cast<ASTElifGroup*>($2),
             static_cast<ASTGroup*>($3),
             NULL);
 }
             | ifs_line elif_group else_line group endif_line
 {
-    $$ = CreateIfGroup(static_cast<ASTConstantExpr*>($1),
+    $$ = CreateIfGroup(static_cast<ASTPPTokens*>($1),
             static_cast<ASTElifGroup*>($2),
             NULL,
             static_cast<ASTGroup*>($4));
 }
             | ifs_line elif_group group else_line group endif_line
 {
-    $$ = CreateIfGroup(static_cast<ASTConstantExpr*>($1),
+    $$ = CreateIfGroup(static_cast<ASTPPTokens*>($1),
             static_cast<ASTElifGroup*>($2),
             static_cast<ASTGroup*>($3),
             static_cast<ASTGroup*>($5));
@@ -196,29 +216,29 @@ if_group    : ifs_line group endif_line
             ;
 elif_group  : group elif_line   {
                   $$ = CreateElifGroup(static_cast<ASTGroup*>($1),
-                                       static_cast<ASTConstantExpr*>($2));
+                                       static_cast<ASTPPTokens*>($2));
                                 }
             | elif_line         {
                   $$ = CreateElifGroup(NULL,
-                                       static_cast<ASTConstantExpr*>($1));
+                                       static_cast<ASTPPTokens*>($1));
                                 }
              
             | elif_group group elif_line
 {
     $$ = CreateElifGroup(static_cast<ASTElifGroup *>($1),
         static_cast<ASTGroup *>($2),
-        static_cast<ASTConstantExpr *>($3));
+        static_cast<ASTPPTokens *>($3));
 }
             | elif_group elif_line
 {
     $$ = CreateElifGroup(static_cast<ASTElifGroup*>($1),
             NULL,
-            static_cast<ASTConstantExpr*>($2));
+            static_cast<ASTPPTokens*>($2));
 }
             ;
-ifs_line    : "^#" IF constant_expr NEWLINE
+ifs_line    : "^#" IF pp_constant_expr NEWLINE
 {
-    $$ = CreateIfExpr(static_cast<ASTConstantExpr*>($3));
+    $$ = CreateIfExpr(static_cast<ASTPPTokens*>($3));
 }
             | "^#" IFDEF ID NEWLINE
 {
@@ -229,7 +249,7 @@ ifs_line    : "^#" IF constant_expr NEWLINE
     $$ = CreateIfndefExpr(static_cast<ASTPPToken*>($3));
 }
             ;
-elif_line   : "^#" ELIF constant_expr NEWLINE    {$$=$3;}
+elif_line   : "^#" ELIF pp_constant_expr NEWLINE    {$$=$3;}
             ;
 else_line   : "^#" ELSE NEWLINE
             ;
@@ -313,7 +333,7 @@ id_list     : ID                {$$=CreatePPTokens(static_cast<ASTPPToken *>($1)
             ;
 replacement_list: pp_tokens     {$$=$1;}
                 ;
-constant_expr   : pp_tokens
+pp_constant_expr: pp_tokens
 {
     $$ = CreateConstantExpr(static_cast<ASTPPTokens*>($1));
 }
@@ -374,15 +394,27 @@ pp_token    : ID                {$$=$1;}
             | "|="              {$$=$1;}
             | ','               {$$=$1;}
             | "##"              {$$=$1;}
-            | UNKNOWN           {$$=$1;}
             ;
 
+pp_expr     : NUM   {$$ = $1;}
+            ;
 %%
 
 int combinelex(Context *ctx)
 {
     if (!ctx->lexer)
         return 0;
+    if (ctx->parseStart) {
+        ctx->parseStart = false;
+        switch (ctx->langDialect) {
+        case Context::None:
+            break;
+        case Context::PP:
+            return CPP_FILE;
+        case Context::PPExpression:
+            return CPP_EXPRESSION;
+        }
+    }
     Token tok = ctx->lexer->lex();
     combinelval = (YYSTYPE)tok.value;
     return tok.type;

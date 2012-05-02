@@ -257,10 +257,7 @@ ASTNode *CreateTextLine(ASTPPTokens *PPTokens)
 
 ASTNode *CreateConstantExpr(ASTPPTokens *PPTokens)
 {
-    ASTConstantExpr *constExpr = new ASTConstantExpr();
-    constExpr->append(*PPTokens);
-    delete PPTokens;
-    return constExpr;
+    return PPTokens;
 }
 
 //=============================================================================
@@ -479,15 +476,6 @@ bool ASTPPToken::isStringLiteral() const
     return ppTokenType() == STRING_LITERAL;
 }
 
-ASTConstantExpr::ASTConstantExpr()
-    : ASTNodeList(ASTNode::Expr, "ConstantExpression")
-{
-}
-
-ASTConstantExpr::~ASTConstantExpr()
-{
-}
-
 ASTPPTokens::ASTPPTokens()
     : ASTNodeList(ASTNode::PPTokens, "PPTokens")
 {
@@ -511,10 +499,10 @@ class ASTElifElement::Private
 {
 public:
     ASTGroup *group;
-    ASTConstantExpr *expr;
+    ASTPPTokens *expr;
 };
 
-ASTElifElement::ASTElifElement(ASTGroup *group, ASTConstantExpr *expr)
+ASTElifElement::ASTElifElement(ASTGroup *group, ASTPPTokens *expr)
     : ASTNode(ASTNode::ElifElem, "Elif element"),
       d(new ASTElifElement::Private)
 {
@@ -532,7 +520,7 @@ ASTGroup *ASTElifElement::group() const
     return d->group;
 }
 
-ASTConstantExpr *ASTElifElement::expr() const
+ASTPPTokens *ASTElifElement::expr() const
 {
     return d->expr;
 }
@@ -549,7 +537,7 @@ ASTElifGroup::~ASTElifGroup()
 class ASTIfGroup::Private
 {
 public:
-    ASTConstantExpr *expr;
+    ASTPPTokens *expr;
     ASTGroup *trueBranch;
     ASTGroup *falseBranch;
 };
@@ -565,7 +553,7 @@ ASTIfGroup::~ASTIfGroup()
     delete d;
 }
 
-void ASTIfGroup::setExpr(ASTConstantExpr *expr)
+void ASTIfGroup::setExpr(ASTPPTokens *expr)
 {
     d->expr = expr;
 }
@@ -580,7 +568,7 @@ void ASTIfGroup::setFalseBranch(ASTGroup *group)
     d->falseBranch = group;
 }
 
-ASTConstantExpr *ASTIfGroup::expr() const
+ASTPPTokens *ASTIfGroup::expr() const
 {
     return d->expr;
 }
@@ -636,18 +624,18 @@ ASTNonDirective::~ASTNonDirective()
 ASTNode *CreateGroup(ASTNode *groupPart)
 {
     ASTGroup *group = new ASTGroup();
-    group->append(groupPart);
+    group->appendPart(groupPart);
     return group;
 }
 
-ASTNode *CreateIfExpr(ASTConstantExpr *expr)
+ASTNode *CreateIfExpr(ASTPPTokens *expr)
 {
     return expr;
 }
 
 ASTNode *CreateIfdefExpr(ASTPPToken *id)
 {
-    ASTConstantExpr *expr = new ASTConstantExpr();
+    ASTPPTokens *expr = new ASTPPTokens();
     expr->append(CreateOp("defined"));
     expr->append(CreateOp('('));
     expr->append(id);
@@ -657,7 +645,7 @@ ASTNode *CreateIfdefExpr(ASTPPToken *id)
 
 ASTNode *CreateIfndefExpr(ASTPPToken *id)
 {
-    ASTConstantExpr *expr = new ASTConstantExpr();
+    ASTPPTokens *expr = new ASTPPTokens();
     expr->append(CreateOp('!'));
     expr->append(CreateOp("defined"));
     expr->append(CreateOp('('));
@@ -666,12 +654,12 @@ ASTNode *CreateIfndefExpr(ASTPPToken *id)
     return expr;
 }
 
-ASTNode *CreateIfGroup(ASTConstantExpr *expr, ASTGroup *trueBranch, ASTGroup *falseBranch)
+ASTNode *CreateIfGroup(ASTPPTokens *expr, ASTGroup *trueBranch, ASTGroup *falseBranch)
 {
     return CreateIfGroup(expr, NULL, trueBranch, falseBranch);
 }
 
-ASTNode *CreateIfGroup(ASTConstantExpr *expr, ASTElifGroup *elifGroup, ASTGroup *groupAfterElif, ASTGroup *elseBranch)
+ASTNode *CreateIfGroup(ASTPPTokens *expr, ASTElifGroup *elifGroup, ASTGroup *groupAfterElif, ASTGroup *elseBranch)
 {
     ASTIfGroup *ifGroup, *aif, *bif;
     ASTElifElement *elem;
@@ -695,13 +683,13 @@ ASTNode *CreateIfGroup(ASTConstantExpr *expr, ASTElifGroup *elifGroup, ASTGroup 
     return ifGroup;
 }
 
-ASTNode *CreateElifGroup(ASTElifGroup *elifGroup, ASTGroup *group, ASTConstantExpr *expr)
+ASTNode *CreateElifGroup(ASTElifGroup *elifGroup, ASTGroup *group, ASTPPTokens *expr)
 {
     elifGroup->append(new ASTElifElement(group, expr));
     return elifGroup;
 }
 
-ASTNode *CreateElifGroup(ASTGroup *group, ASTConstantExpr *expr)
+ASTNode *CreateElifGroup(ASTGroup *group, ASTPPTokens *expr)
 {
     ASTElifGroup *elifGroup = new ASTElifGroup;
     ASTElifElement *elifElem = new ASTElifElement(group, expr);
