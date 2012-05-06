@@ -5,6 +5,7 @@
 #include <QString>
 #include <QMap>
 
+typedef QMap<QString, ASTNode *> SymbolTable;
 class Lexer;
 class Context
 {
@@ -16,11 +17,13 @@ public:
     };
     Context();
     ASTNode *root;
-    QMap<QString, ASTNode *> symtab;
+    QMap<QString, ASTNode *> rootCollection;
+    SymbolTable symtab;
     Lexer *lexer;
     LangDialect langDialect;
+    int includeDepth;
     bool parseStart;
-
 };
 
 #endif // CONTEXT_H
+

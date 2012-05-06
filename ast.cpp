@@ -112,6 +112,7 @@ ASTNode *CreateOp(const QString &str)
         GOpMap.insert("%>", '}');
         GOpMap.insert("%:", '#');
         GOpMap.insert("%:%:", HASH_HASH);
+        GOpMap.insert("::", COLON_COLON);
         GOpMap.insert("...", DOT_DOT_DOT);
     }
     if (!GOpMap.contains(str)) {
@@ -372,6 +373,16 @@ ASTInclude::ASTInclude()
 
 ASTInclude::~ASTInclude()
 {
+}
+
+QList<ASTPPToken *> ASTInclude::tokenList() const
+{
+    ASTNodeList::iterator iter;
+    QList<ASTPPToken*> tlist;
+    for (iter = begin(); iter != end(); iter++) {
+        tlist << static_cast<ASTPPToken*>(*iter);
+    }
+    return tlist;
 }
 
 ASTLine::ASTLine()

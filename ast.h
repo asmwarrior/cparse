@@ -15,6 +15,7 @@ class ASTNodeList;
 class ASTPPToken;
 class ASTPPTokens;
 class ASTTextLine;
+class ASTExpr;
 
 extern QMap<QString, int> GOpMap;
 ASTNode *CreateGroup(ASTNode *groupPart);
@@ -142,6 +143,7 @@ class ASTInclude: public ASTNodeList
 public:
     ASTInclude();
     ~ASTInclude();
+    QList<ASTPPToken *> tokenList() const;
 private:
     class Private;
     Private *d;
@@ -274,3 +276,4 @@ public:
 };
 
 #endif // AST_H
+

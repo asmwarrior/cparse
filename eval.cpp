@@ -50,7 +50,7 @@ ASTInteger *evalUnaryExpr(ASTUnaryExpr *expr)
         return NULL;
     switch (expr->op()) {
     case ASTUnaryExpr::LogicalNot:
-        i = new ASTInteger(base->isZero() ? 0 : 1);
+        i = new ASTInteger(base->isZero() ? 1 : 0);
         break;
     case ASTUnaryExpr::AriReverse:
         switch (base->integerType()) {
@@ -71,6 +71,28 @@ ASTInteger *evalUnaryExpr(ASTUnaryExpr *expr)
             break;
         case ASTInteger::UnsignedLongLongInt:
             i = new ASTInteger(-base->asULLInt());
+            break;
+        }
+        break;
+    case ASTUnaryExpr::BitwiseReverse:
+        switch (base->integerType()) {
+        case ASTInteger::Int:
+            i = new ASTInteger(~base->asInt());
+            break;
+        case ASTInteger::LongInt:
+            i = new ASTInteger(~base->asLInt());
+            break;
+        case ASTInteger::LongLongInt:
+            i = new ASTInteger(~base->asLLInt());
+            break;
+        case ASTInteger::UnsignedInt:
+            i = new ASTInteger(~base->asUInt());
+            break;
+        case ASTInteger::UnsignedLongInt:
+            i = new ASTInteger(~base->asULInt());
+            break;
+        case ASTInteger::UnsignedLongLongInt:
+            i = new ASTInteger(~base->asULLInt());
             break;
         }
         break;
@@ -113,10 +135,12 @@ T evalBinaryNum(ASTBinaryExpr::BinaryOp op, T t1, T t2)
         return t1 & t2;
     case ASTBinaryExpr::BitwiseOr:
         return t1 | t2;
-    case ASTBinaryExpr::BitwiseXOr:
+    case ASTBinaryExpr::BitwiseXor:
         return t1 ^ t2;
-    case ASTBinaryExpr::Comma:
-        return t2;
+    case ASTBinaryExpr::BitwiseLShift:
+        return t1 << t2;
+    case ASTBinaryExpr::BitwiseRShift:
+        return t1 >> t2;
     }
     return T(0);
 }

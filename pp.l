@@ -3,6 +3,7 @@
 #define YY_DECL int pplex(ASTNode *&pplval)
 #include "combine_yacc.h"
 #include <ctype.h>
+#include <QDebug>
 
 static void comment();
 
@@ -43,7 +44,7 @@ char_constant       '{c_char_seq}'|L'{c_char_seq}'
 string_literal      \"{s_char_seq}?\"|L\"{s_char_seq}?\"
 s_char_seq          {s_char}*
 s_char              [^\"\\\n]|{escape_seq}
-punct               [\[\]\(\)\{\}\.&\*\+-~\/%\^\|<>\?:;=,#!]|->|\+\+|--|<<|>>|<=|>=|==|!=|&&|\*=|\/=|%=|\+=|-=|<<=|>>=|&=|\^=|\|=|##|<:|:>|<%|%>|%:|%:%:|\.\.\.
+punct               [\[\]\(\)\{\}\.&\*\+-~\/%\^\|<>\?:;=,#!]|->|\+\+|--|<<|>>|<=|>=|==|::|!=|&&|\*=|\/=|%=|\+=|-=|<<=|>>=|&=|\^=|\|=|##|<:|:>|<%|%>|%:|%:%:|\.\.\.
 ws                  [ \t]
 newline             \n
 

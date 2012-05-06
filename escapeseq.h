@@ -10,7 +10,7 @@ class EscapeSequence
 {
 public:
     static const QMap<QString, QString> &SimpleMap();
-    static QString Unescape(const QString &str, bool wide);
+    static QString Unescape(const QString &str, bool wide = false);
     static QString Escape(const QString &str);
 };
 

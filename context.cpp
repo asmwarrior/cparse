@@ -2,7 +2,8 @@
 
 Context::Context()
     : root(NULL),
-      lexer(NULL)
+      lexer(NULL),
+      includeDepth(0)
 {
 }
 

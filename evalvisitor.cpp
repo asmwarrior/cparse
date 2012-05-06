@@ -8,6 +8,7 @@
 #include "pptokenlistlexer.h"
 #include "parser.h"
 #include "eval.h"
+#include "escapeseq.h"
 #include <stdio.h>
 #include <QList>
 #include <QListIterator>
@@ -47,6 +48,8 @@ public:
                      QList<ASTPPToken *> &tokens,
                      QList<QSet<QString> > &setList);
     void filterDefined(QList<ASTPPToken *> &tokens);
+    QString buildIncludeString(const QList<ASTPPToken*> &tokens);
+    QString removeDoubleQuote(const QString &str);
     EvalVisitor *q;
     QList<ASTPPToken*> ppTokens;
 };
@@ -60,6 +63,27 @@ EvalVisitor::EvalVisitor(Context *ctx)
 EvalVisitor::~EvalVisitor()
 {
     delete d;
+}
+
+void EvalVisitor::visitInclude(ASTNode *node)
+{
+    ASTInclude *inc = static_cast<ASTInclude*>(node);
+    QString str = d->buildIncludeString(inc->tokenList());
+    ASTNode *saveRoot;
+    parseFile(context(), str);
+    if (!context()->root) {
+        qWarning() << "Bad include: " << str;
+        return;
+    }
+    if (context()->includeDepth >= 10) {
+        qWarning() << "Recursive include depth exceeded";
+        return;
+    }
+    ++context()->includeDepth;
+    saveRoot = context()->root;
+    context()->root->accept(this);
+    context()->root = saveRoot;
+    --context()->includeDepth;
 }
 
 void EvalVisitor::visitGroup(ASTNode *node)
@@ -586,4 +610,45 @@ void EvalVisitor::Private::filterDefined(QList<ASTPPToken *> &tokens)
             i.insert(ppToken);
         }
     }
+}
+
+QString EvalVisitor::Private::buildIncludeString(const QList<ASTPPToken *> &inTokens)
+{
+    QString fname;
+    int i;
+    QList<ASTPPToken*> tokens, outTokens;
+    QList<QSet<QString> > inSL, outSL;
+    bool retried = false;
+    tokens = inTokens;
+retry:
+    if (tokens.isEmpty())
+        return QString();
+    if ((tokens.size() == 1) && ((tokens.first()->ppTokenType() == STRING_LITERAL)
+                                 || (tokens.first()->ppTokenType() == HEADER_NAME))) {
+        fname = removeDoubleQuote(EscapeSequence::Unescape(tokens.at(0)->spellName()));
+        goto out;
+    }
+    if ((tokens.size() > 2) && (tokens.first()->ppTokenType() == '<')
+            && (tokens.last()->ppTokenType() == '>')) {
+        for (i=1; i<tokens.size()-1; i++)
+            fname.append(removeDoubleQuote(EscapeSequence::Unescape(tokens.at(i)->spellName())));
+       goto out;
+    }
+    if (retried)
+        goto out;
+    for (i = 0; i < tokens.size(); i++)
+        inSL << QSet<QString>();
+    macroExpand(inSL, outSL, tokens,
+                   outTokens);
+    retried = true;
+    goto retry;
+out:
+    return fname;
+}
+
+QString EvalVisitor::Private::removeDoubleQuote(const QString &str)
+{
+    if (str.startsWith("\"") && str.endsWith("\""))
+        return str.mid(1, str.size()-2);
+    return str;
 }

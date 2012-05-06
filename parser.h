@@ -10,3 +10,4 @@ int parseFile(Context *ctx, const QString &fname);
 int parse(Context *ctx, Lexer *lexer);
 
 #endif // PARSER_H
+

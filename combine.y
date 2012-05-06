@@ -1,6 +1,7 @@
 %{
 #include "pp_lex.h"
 #include "ast.h"
+#include "astexpr.h"
 #include "lexer.h"
 #include "context.h"
 #include <ctype.h>
@@ -78,6 +79,7 @@ void combineerror(Context *ctx, const char *);
 %token OR_ASSIGN        "|="
 %token LINESTART_HASH   "^#"
 %token HASH_HASH        "##"
+%token COLON_COLON      "::"
 
 %token IFDEF
 %token IFNDEF
@@ -394,58 +396,145 @@ pp_token    : ID                {$$=$1;}
             | "|="              {$$=$1;}
             | ','               {$$=$1;}
             | "##"              {$$=$1;}
+            | "::"              {$$=$1;}
             ;
 
 pp_expr     :  pp_cond_expr {$$ = $1;}
             ;
 pp_cond_expr: pp_rel_or_expr {$$ = $1;}
-            | pp_rel_or_expr ':' pp_expr ':' pp_cond_expr
+            | pp_rel_or_expr '?' pp_expr ':' pp_cond_expr
+{
+    $$ = CreateTernaryExpr(ASTTernaryExpr::Conditional, static_cast<ASTExpr*>($1),
+    static_cast<ASTExpr*>($3), static_cast<ASTExpr*>($5));
+}
             ;
 pp_rel_or_expr  : pp_rel_and_expr {$$ = $1;}
                 | pp_rel_or_expr "||" pp_rel_and_expr
+{
+    $$ = CreateBinaryExpr(ASTBinaryExpr::LogicalOr, static_cast<ASTExpr*>($1),
+        static_cast<ASTExpr*>($3));
+}
                 ;
 pp_rel_and_expr : pp_or_expr {$$ = $1;}
                 | pp_rel_and_expr "&&" pp_or_expr
+{
+    $$ = CreateBinaryExpr(ASTBinaryExpr::LogicalAnd, static_cast<ASTExpr*>($1),
+        static_cast<ASTExpr*>($3));
+}
                 ;
 pp_or_expr      : pp_xor_expr {$$ = $1;}
                 | pp_or_expr '|' pp_xor_expr
+{
+    $$ = CreateBinaryExpr(ASTBinaryExpr::BitwiseOr, static_cast<ASTExpr*>($1),
+        static_cast<ASTExpr*>($3));
+}
                 ;
 pp_xor_expr     : pp_and_expr {$$ = $1;}
                 | pp_xor_expr '^' pp_and_expr
+{
+    $$ = CreateBinaryExpr(ASTBinaryExpr::BitwiseXor, static_cast<ASTExpr*>($1),
+        static_cast<ASTExpr*>($3));
+}
                 ;
 pp_and_expr     : pp_eq_expr {$$ = $1;}
                 | pp_and_expr '&' pp_eq_expr
+{
+    $$ = CreateBinaryExpr(ASTBinaryExpr::BitwiseAnd, static_cast<ASTExpr*>($1),
+        static_cast<ASTExpr*>($3));
+}
                 ;
 pp_eq_expr      : pp_rel_expr {$$ = $1;}
                 | pp_eq_expr "==" pp_rel_expr
+{
+    $$ = CreateBinaryExpr(ASTBinaryExpr::RelaEqual, static_cast<ASTExpr*>($1),
+        static_cast<ASTExpr*>($3));
+}
                 | pp_eq_expr "!=" pp_rel_expr
+{
+    $$ = CreateBinaryExpr(ASTBinaryExpr::RelaInequal, static_cast<ASTExpr*>($1),
+        static_cast<ASTExpr*>($3));
+}
                 ;
 pp_rel_expr     : pp_shift_expr {$$ = $1;}
                 | pp_rel_expr '<' pp_shift_expr
+{
+    $$ = CreateBinaryExpr(ASTBinaryExpr::RelaLess, static_cast<ASTExpr*>($1),
+        static_cast<ASTExpr*>($3));
+}
                 | pp_rel_expr '>' pp_shift_expr
+{
+    $$ = CreateBinaryExpr(ASTBinaryExpr::RelaGreater, static_cast<ASTExpr*>($1),
+        static_cast<ASTExpr*>($3));
+}
                 | pp_rel_expr "<=" pp_shift_expr
+{
+    $$ = CreateBinaryExpr(ASTBinaryExpr::RelaLessEqual, static_cast<ASTExpr*>($1),
+        static_cast<ASTExpr*>($3));
+}
                 | pp_rel_expr ">=" pp_shift_expr
+{
+    $$ = CreateBinaryExpr(ASTBinaryExpr::RelaGreaterEqual, static_cast<ASTExpr*>($1),
+        static_cast<ASTExpr*>($3));
+}
                 ;
 pp_shift_expr   : pp_add_expr {$$ = $1;}
                 | pp_shift_expr "<<" pp_add_expr
+{
+    $$ = CreateBinaryExpr(ASTBinaryExpr::BitwiseLShift, static_cast<ASTExpr*>($1),
+        static_cast<ASTExpr*>($3));
+}
                 | pp_shift_expr ">>" pp_add_expr
+{
+    $$ = CreateBinaryExpr(ASTBinaryExpr::BitwiseRShift, static_cast<ASTExpr*>($1),
+        static_cast<ASTExpr*>($3));
+}
                 ;
 pp_add_expr     : pp_mult_expr {$$ = $1;}
                 | pp_add_expr '+' pp_mult_expr
+{
+    $$ = CreateBinaryExpr(ASTBinaryExpr::AriPlus, static_cast<ASTExpr*>($1),
+        static_cast<ASTExpr*>($3));
+}
                 | pp_add_expr '-' pp_mult_expr
+{
+    $$ = CreateBinaryExpr(ASTBinaryExpr::AriMinus, static_cast<ASTExpr*>($1),
+        static_cast<ASTExpr*>($3));
+}
                 ;
 pp_mult_expr    : pp_unary_expr {$$ = $1;}
                 | pp_mult_expr '*' pp_unary_expr
+{
+    $$ = CreateBinaryExpr(ASTBinaryExpr::AriMult, static_cast<ASTExpr*>($1),
+        static_cast<ASTExpr*>($3));
+}
                 | pp_mult_expr '/' pp_unary_expr
+{
+    $$ = CreateBinaryExpr(ASTBinaryExpr::AriDiv, static_cast<ASTExpr*>($1),
+        static_cast<ASTExpr*>($3));
+}
                 | pp_mult_expr '%' pp_unary_expr
+{
+    $$ = CreateBinaryExpr(ASTBinaryExpr::AriMod, static_cast<ASTExpr*>($1),
+        static_cast<ASTExpr*>($3));
+}
                 ;
 pp_unary_expr   : pp_primary_expr {$$ = $1;}
                 | '-' pp_unary_expr
-                | '+' pp_unary_expr
+{
+    $$ = CreateUnaryExpr(ASTUnaryExpr::AriReverse, static_cast<ASTExpr*>($2));
+}
+                | '+' pp_unary_expr {$$ = $2;}
                 | '~' pp_unary_expr
+{
+    $$ = CreateUnaryExpr(ASTUnaryExpr::BitwiseReverse, static_cast<ASTExpr*>($2));
+}
                 | '!' pp_unary_expr
+{
+    $$ = CreateUnaryExpr(ASTUnaryExpr::LogicalNot, static_cast<ASTExpr*>($2));
+}
                 ;
 pp_primary_expr : NUM {$$ = $1;}
+                | '(' pp_expr ')' {$$ = $2;}
                 ;
 %%
 

@@ -47,7 +47,8 @@ class ASTUnaryExpr: public ASTExpr
 public:
     enum UnaryOp {
         LogicalNot,
-        AriReverse
+        AriReverse,
+        BitwiseReverse
     };
     ASTUnaryExpr(UnaryOp op, ASTExpr *expr);
     ~ASTUnaryExpr();
@@ -69,7 +70,9 @@ public:
         LogicalOr,
         BitwiseAnd,
         BitwiseOr,
-        BitwiseXOr,
+        BitwiseXor,
+        BitwiseLShift,
+        BitwiseRShift,
         RelaEqual,
         RelaInequal,
         RelaLess,
@@ -80,8 +83,7 @@ public:
         AriMinus,
         AriMult,
         AriDiv,
-        AriMod,
-        Comma,
+        AriMod
     };
     ASTBinaryExpr(BinaryOp op, ASTExpr *le, ASTExpr *re);
     ~ASTBinaryExpr();
@@ -110,5 +112,10 @@ private:
     class Private;
     Private *d;
 };
+
+ASTNode *CreateUnaryExpr(ASTUnaryExpr::UnaryOp op, ASTExpr *expr);
+ASTNode *CreateBinaryExpr(ASTBinaryExpr::BinaryOp op, ASTExpr *left, ASTExpr *right);
+ASTNode *CreateTernaryExpr(ASTTernaryExpr::TernaryOp op, ASTExpr *first, ASTExpr *second,
+                           ASTExpr *third);
 
 #endif // ASTEXPR_H

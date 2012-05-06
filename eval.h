@@ -15,3 +15,4 @@ ASTInteger *evalTernaryExpr(ASTTernaryExpr *expr);
 ASTInteger *evalExpr(ASTExpr *expr);
 
 #endif // EVAL_H
+

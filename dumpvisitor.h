@@ -25,3 +25,4 @@ public slots:
 };
 
 #endif // DUMPVISITOR_H
+

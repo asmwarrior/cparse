@@ -16,6 +16,7 @@ public:
     EvalVisitor(Context *ctx);
     ~EvalVisitor();
 public slots:
+    void visitInclude(ASTNode *node);
     void visitGroup(ASTNode *node);
     void visitTextGroup(ASTNode *node);
     void visitNonDirective(ASTNode *node);
@@ -30,3 +31,4 @@ private:
 };
 
 #endif // EVALVISITOR_H
+

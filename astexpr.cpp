@@ -157,3 +157,19 @@ ASTExpr *ASTTernaryExpr::thirdExpr() const
 {
     return d->thirdExpr;
 }
+
+ASTNode *CreateUnaryExpr(ASTUnaryExpr::UnaryOp op, ASTExpr *expr)
+{
+    return new ASTUnaryExpr(op, expr);
+}
+
+ASTNode *CreateBinaryExpr(ASTBinaryExpr::BinaryOp op, ASTExpr *left, ASTExpr *right)
+{
+    return new ASTBinaryExpr(op, left, right);
+}
+
+ASTNode *CreateTernaryExpr(ASTTernaryExpr::TernaryOp op, ASTExpr *first, ASTExpr *second,
+                           ASTExpr *third)
+{
+    return new ASTTernaryExpr(op, first, second, third);
+}
