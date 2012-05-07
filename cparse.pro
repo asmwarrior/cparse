@@ -34,7 +34,8 @@ SOURCES += main.cpp \
     lexer.cpp \
     pptokenlistlexer.cpp \
     eval.cpp \
-    textutil.cpp
+    textutil.cpp \
+    includepath.cpp
 
 HEADERS += \
     ast.h \
@@ -50,4 +51,5 @@ HEADERS += \
     pplexer.h \
     pptokenlistlexer.h \
     eval.h \
-    textutil.h
+    textutil.h \
+    includepath.h

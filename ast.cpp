@@ -95,6 +95,7 @@ ASTNode *CreateOp(const QString &str)
         GOpMap.insert("==", EQ);
         GOpMap.insert("!=", NE);
         GOpMap.insert("&&", AND_AND);
+        GOpMap.insert("||", OR_OR);
         GOpMap.insert("*=", MULT_ASSIGN);
         GOpMap.insert("/=", DIV_ASSIGN);
         GOpMap.insert("%=", MOD_ASSIGN);
@@ -717,6 +718,15 @@ ASTTextLine::~ASTTextLine()
 {
 }
 
+QList<ASTPPToken *> ASTTextLine::tokenList() const
+{
+    QList<ASTPPToken*> tlist;
+    ASTNodeList::iterator iter;
+    for (iter = begin(); iter != end(); iter++)
+        tlist << static_cast<ASTPPToken*>(*iter);
+    return tlist;
+}
+
 ASTTextGroup::ASTTextGroup()
     : ASTNodeList(ASTNode::TextLines, "TextLines")
 {
@@ -729,12 +739,11 @@ ASTTextGroup::~ASTTextGroup()
 QList<ASTPPToken*> ASTTextGroup::tokenList() const
 {
     ASTTextLine *tl;
-    ASTNodeList::iterator iter, jter;
+    ASTNodeList::iterator iter;
     QList<ASTPPToken*> tlist;
     for (iter = begin(); iter != end(); iter++) {
         tl = static_cast<ASTTextLine*>(*iter);
-        for (jter = tl->begin(); jter != tl->end(); jter++)
-            tlist << static_cast<ASTPPToken*>(*jter);
+        tlist << tl->tokenList();
     }
     return tlist;
 }

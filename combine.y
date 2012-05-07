@@ -273,6 +273,12 @@ control_line: "^#" INCLUDE pp_tokens NEWLINE
                                NULL,
                                static_cast<ASTPPTokens*>($4));
 }
+            | "^#" DEFINE ID_FUNC  id_list ')' NEWLINE
+{
+    $$ = CreateDefine(static_cast<ASTPPToken*>($3),
+                               static_cast<ASTPPTokens*>($4),
+                               NULL);
+}
             | "^#" DEFINE ID_FUNC  id_list ')' replacement_list NEWLINE
 {
     $$ = CreateDefine(static_cast<ASTPPToken*>($3),
@@ -561,5 +567,5 @@ int combinelex(Context *ctx)
 void combineerror(Context *ctx, const char *str)
 {
     (void)ctx;
-    fprintf(stderr, "%d:%s\n", pplineno, str);
+    fprintf(stderr, "%s:%d:%s\n", ctx->currentFileName.toLocal8Bit().constData(), pplineno, str);
 }

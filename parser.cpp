@@ -1,10 +1,13 @@
 #include "parser.h"
 #include "context.h"
+#include "includepath.h"
 #include "pplexer.h"
 #include "combine_yacc.h"
 #include "textutil.h"
 #include <stdio.h>
+#include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QByteArray>
 #include <QDebug>
 
@@ -26,16 +29,24 @@ int parseFile(Context *ctx, const QString &fname)
     PPLexer pplexer;
     QFile f;
     QByteArray buf;
+    QString savedFileName;
     int ret;
     if (ctx->rootCollection.contains(fname)) {
         ctx->root = ctx->rootCollection.value(fname);
         return 0;
     }
-    f.setFileName(fname);
+    if (!fname.startsWith("/"))
+        f.setFileName(QLatin1String("File:") + fname);
+    else
+        f.setFileName(fname);
     if (!f.open(QFile::ReadOnly)) {
         qWarning() << "Unable to open file " << fname;
         return -1;
     }
+    savedFileName = ctx->currentFileName;
+    ctx->currentFileName = fname;
+    IncludePath::instance()->save();
+    IncludePath::instance()->add(QFileInfo(f).absolutePath());
     buf = f.readAll();
     f.close();
     buf = filterTrigraph(buf);
@@ -47,6 +58,8 @@ int parseFile(Context *ctx, const QString &fname)
     if (ret == 0) {
         ctx->rootCollection.insert(fname, ctx->root);
     }
+    IncludePath::instance()->restore();
+    ctx->currentFileName = savedFileName;
     return ret;
 }
 

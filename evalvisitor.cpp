@@ -48,8 +48,10 @@ public:
                      QList<ASTPPToken *> &tokens,
                      QList<QSet<QString> > &setList);
     void filterDefined(QList<ASTPPToken *> &tokens);
+    void filterUndefined(QList<ASTPPToken *> &tokens);
     QString buildIncludeString(const QList<ASTPPToken*> &tokens);
     QString removeDoubleQuote(const QString &str);
+    bool bracketMatched(const QList<ASTPPToken*> &tokens);
     EvalVisitor *q;
     QList<ASTPPToken*> ppTokens;
 };
@@ -75,7 +77,7 @@ void EvalVisitor::visitInclude(ASTNode *node)
         qWarning() << "Bad include: " << str;
         return;
     }
-    if (context()->includeDepth >= 10) {
+    if (context()->includeDepth >= 20) {
         qWarning() << "Recursive include depth exceeded";
         return;
     }
@@ -99,26 +101,40 @@ void EvalVisitor::visitGroup(ASTNode *node)
 void EvalVisitor::visitTextGroup(ASTNode *node)
 {
     ASTTextGroup *tg = static_cast<ASTTextGroup*>(node);
-    QList<ASTPPToken*> outTokens;
+    ASTTextLine *tl;
+    QList<ASTPPToken*> tokens, outTokens;
     QList<QSet<QString> > inSL, outSL;
-    for (int i = 0; i < tg->tokenList().size(); i++)
-        inSL << QSet<QString>();
-    d->macroExpand(inSL, outSL, tg->tokenList(),
-                   outTokens);
-    foreach (ASTPPToken *tok, outTokens)
-        printf("%s ", tok->spellName().toUtf8().constData());
-    printf("\n");
-    d->ppTokens << outTokens;
+    int i, j;
+    for (i = 0; i < tg->nodeList().size(); i++) {
+        tl = static_cast<ASTTextLine*>(tg->nodeList().at(i));
+        tokens << tl->tokenList();
+        if (!d->bracketMatched(tokens))
+            continue;
+        for (j = 0; j < tokens.size(); j++)
+            inSL << QSet<QString>();
+        d->macroExpand(inSL, outSL, tokens,
+                       outTokens);
+        foreach (ASTPPToken *tok, outTokens)
+            printf("%s ", tok->spellName().toUtf8().constData());
+        printf("\n");
+        d->ppTokens << outTokens;
+        tokens.clear();
+    }
+    if (!tokens.isEmpty()) {
+        qWarning() << "bracket not matched";
+    }
 }
 
 void EvalVisitor::visitNonDirective(ASTNode *node)
 {
     Q_UNUSED(node);
+    printf("\n");
 }
 
 void EvalVisitor::visitPragma(ASTNode *node)
 {
     Q_UNUSED(node);
+    printf("\n");
 }
 
 void EvalVisitor::visitIfGroup(ASTNode *node)
@@ -134,6 +150,7 @@ void EvalVisitor::visitIfGroup(ASTNode *node)
     for (int i = 0; i < inTokens.size(); i++)
         inSL << QSet<QString>();
     d->macroExpand(inSL, outSL, inTokens, outTokens);
+    d->filterUndefined(outTokens);
     lexer.setPPTokenList(outTokens);
     ctx.langDialect = Context::PPExpression;
     ctx.symtab = context()->symtab;
@@ -581,6 +598,7 @@ void EvalVisitor::Private::filterDefined(QList<ASTPPToken *> &tokens)
                     macroDefined = true;
                 else
                     macroDefined = false;
+                i.remove();
             } else if (i.peekPrevious()->ppTokenType() == '(') {
                 i.remove();
                 i.next();
@@ -608,6 +626,18 @@ void EvalVisitor::Private::filterDefined(QList<ASTPPToken *> &tokens)
             else
                 ppToken = static_cast<ASTPPToken*>(CreatePPNumber("0"));
             i.insert(ppToken);
+        }
+    }
+}
+
+void EvalVisitor::Private::filterUndefined(QList<ASTPPToken *> &tokens)
+{
+    QMutableListIterator<ASTPPToken *> i(tokens);
+    while (i.hasNext()) {
+        i.next();
+        if (i.peekPrevious()->isID()) {
+            i.remove();
+            i.insert(static_cast<ASTPPToken*>(CreatePPNumber("0")));
         }
     }
 }
@@ -651,4 +681,16 @@ QString EvalVisitor::Private::removeDoubleQuote(const QString &str)
     if (str.startsWith("\"") && str.endsWith("\""))
         return str.mid(1, str.size()-2);
     return str;
+}
+
+bool EvalVisitor::Private::bracketMatched(const QList<ASTPPToken *> &tokens)
+{
+    int bdepth = 0;
+    foreach (ASTPPToken *tok, tokens) {
+        if (tok->ppTokenType() == '(')
+            ++bdepth;
+        if (tok->ppTokenType() == ')')
+            --bdepth;
+    }
+    return bdepth == 0;
 }

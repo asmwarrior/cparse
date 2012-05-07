@@ -23,6 +23,7 @@ public:
     LangDialect langDialect;
     int includeDepth;
     bool parseStart;
+    QString currentFileName;
 };
 
 #endif // CONTEXT_H

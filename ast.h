@@ -264,6 +264,7 @@ class ASTTextLine: public ASTNodeList
 public:
     ASTTextLine();
     ~ASTTextLine();
+    QList<ASTPPToken*> tokenList() const;
 };
 
 class ASTTextGroup: public ASTNodeList

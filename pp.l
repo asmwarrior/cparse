@@ -11,7 +11,7 @@ static void comment();
 %option noyywrap nodefault yylineno
 %option header-file="pp_lex.h"
 
-%x XLINE_START XCONTROL_LINE XDEFINE
+%x XLINE_START XDIRECTIVE XDEFINE
 
 digit       [0-9]
 nondigit    [_a-zA-Z]
@@ -44,7 +44,7 @@ char_constant       '{c_char_seq}'|L'{c_char_seq}'
 string_literal      \"{s_char_seq}?\"|L\"{s_char_seq}?\"
 s_char_seq          {s_char}*
 s_char              [^\"\\\n]|{escape_seq}
-punct               [\[\]\(\)\{\}\.&\*\+-~\/%\^\|<>\?:;=,#!]|->|\+\+|--|<<|>>|<=|>=|==|::|!=|&&|\*=|\/=|%=|\+=|-=|<<=|>>=|&=|\^=|\|=|##|<:|:>|<%|%>|%:|%:%:|\.\.\.
+punct               [\[\]\(\)\{\}\.&\*\+-~\/%\^\|<>\?:;=,#!]|->|\+\+|--|<<|>>|<=|>=|==|::|!=|\|\||&&|\*=|\/=|%=|\+=|-=|<<=|>>=|&=|\^=|\|=|##|<:|:>|<%|%>|%:|%:%:|\.\.\.
 ws                  [ \t]
 newline             \n
 
@@ -54,33 +54,34 @@ newline             \n
 <*>\/\/.*\n                     {return NEWLINE;}
 
 <*>^.                           {yyless(0);BEGIN(XLINE_START);}
-<XLINE_START>#                  {BEGIN(XCONTROL_LINE);return LINESTART_HASH;}
+<XLINE_START>#                  {BEGIN(XDIRECTIVE);return LINESTART_HASH;}
 <XLINE_START>{ws}    
 <XLINE_START>.|\n               {yyless(0);BEGIN(0);}
-<XCONTROL_LINE>if               {return IF;}
-<XCONTROL_LINE>ifdef            {return IFDEF;}
-<XCONTROL_LINE>ifndef           {return IFNDEF;}
-<XCONTROL_LINE>elif             {return ELIF;}
-<XCONTROL_LINE>else             {return ELSE;}
-<XCONTROL_LINE>endif            {return ENDIF;}
-<XCONTROL_LINE>include          {return INCLUDE;}
-<XCONTROL_LINE>define           {BEGIN(XDEFINE);return DEFINE;}
-<XCONTROL_LINE>defined          {pplval = CreateOp(yytext); return DEFINED;}
-<XCONTROL_LINE>undef            {return UNDEF;}
-<XCONTROL_LINE>line             {return LINE;}
-<XCONTROL_LINE>error            {return ERROR;}
-<XCONTROL_LINE>pragma           {return PRAGMA;}
+<XDIRECTIVE>if               {return IF;}
+<XDIRECTIVE>ifdef            {return IFDEF;}
+<XDIRECTIVE>ifndef           {return IFNDEF;}
+<XDIRECTIVE>elif             {return ELIF;}
+<XDIRECTIVE>else             {return ELSE;}
+<XDIRECTIVE>endif            {return ENDIF;}
+<XDIRECTIVE>include          {return INCLUDE;}
+<XDIRECTIVE>define           {BEGIN(XDEFINE);return DEFINE;}
+<XDIRECTIVE>defined          {pplval = CreateOp(yytext); return DEFINED;}
+<XDIRECTIVE>undef            {return UNDEF;}
+<XDIRECTIVE>line             {return LINE;}
+<XDIRECTIVE>error            {BEGIN(0);return ERROR;}
+<XDIRECTIVE>pragma           {return PRAGMA;}
 
 <XDEFINE>{id}\(     {
     QString str(yytext);
     str.chop(1);
     pplval = CreateID(str);
-    BEGIN(XCONTROL_LINE);
+    BEGIN(XDIRECTIVE);
     return ID_FUNC;
 }
 <XDEFINE>{ws}
-<XDEFINE>.          {yyless(0);BEGIN(XCONTROL_LINE);}
-<*>{id}             {pplval = CreateID(yytext); return ID;}
+<XDEFINE>.          {yyless(0);BEGIN(0);}
+<XDEFINE>{id}       {BEGIN(XDIRECTIVE); pplval = CreateID(yytext); return ID;}
+<INITIAL,XLINE_START,XDIRECTIVE>{id}             {pplval = CreateID(yytext); return ID;}
 <*>{pp_number}      {pplval = CreatePPNumber(yytext); return PP_NUMBER;}
 <*>{char_constant}  {
     pplval = CreateCharConstant(yytext);
