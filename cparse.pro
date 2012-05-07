@@ -33,7 +33,8 @@ SOURCES += main.cpp \
     pplexer.cpp \
     lexer.cpp \
     pptokenlistlexer.cpp \
-    eval.cpp
+    eval.cpp \
+    textutil.cpp
 
 HEADERS += \
     ast.h \
@@ -48,4 +49,5 @@ HEADERS += \
     lexer.h \
     pplexer.h \
     pptokenlistlexer.h \
-    eval.h
+    eval.h \
+    textutil.h

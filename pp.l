@@ -51,7 +51,7 @@ newline             \n
 %%
 <*>^\/\*                        {comment();BEGIN(XLINE_START);}
 <*>\/\*                         {comment();}
-<*>\/\/.*\n 			
+<*>\/\/.*\n                     {return NEWLINE;}
 
 <*>^.                           {yyless(0);BEGIN(XLINE_START);}
 <XLINE_START>#                  {BEGIN(XCONTROL_LINE);return LINESTART_HASH;}
@@ -90,7 +90,7 @@ newline             \n
     pplval = CreateStringLiteral(yytext);
     return STRING_LITERAL;
                     }
-<*>{newline}        {BEGIN(0);return NEWLINE;}
+<*>{newline}        {BEGIN(XLINE_START);return NEWLINE;}
 <*>{ws}
 <*>{punct}          {
     pplval = CreateOp(yytext);
